@@ -1,41 +1,51 @@
-from flask import request
-from subprocess import call
-from flask_restful import Resource
-from dsnat import conf
+from subprocess import check_call, CalledProcessError
+#from dsnat import conf
 from ipaddress import ip_address,ip_network
+import configparser
 
-class addSNAT(Resource):
-    def get(self):
-        post_data = request.get_json(force=True)
+def conf(section='Network', value=''):
+    config = configparser.ConfigParser()
+    config.read('/home/felix/PycharmProjects/dsnat/dsnat.ini')
 
-        source_net = ip_network(post_data['source'])
-        destination_ip = ip_address(post_data['destination'])
+    return config.get(section, value)
 
-        call("nft add element "
-             + conf('Netfilter','SNATTable')
-             + " "
-             +  conf('Netfilter','SNATMap')
-             + " { "
-             + source_net
-             + " : "
-             + destination_ip
-             + " }", shell=True)
+def snat_add(source, destination):
 
-        return {'message': 'External address ' + destination_ip + ' with internal network ' + source_net + ' has been added.'}
+    source_net = ip_network(source)
+    destination_ip = ip_address(destination)
+
+    command = "nft add element " + \
+          conf('Netfilter','SNATTable') + \
+          " " + \
+           conf('Netfilter','SNATMap') + \
+          " { " + \
+          str(source_net) + \
+          " : " + \
+          str(destination_ip) + \
+          " }"
+
+    print(command)
+
+    try:
+        check_call(command, shell=True)
+    except CalledProcessError as e:
+        print("   Code: " + str(e.returncode))
+        print("   Message: " + str(e))
 
 
-class removeSNAT(Resource):
-    def get(self):
-        post_data = request.get_json(force=True)
+    return {'message': '[SNAT] External address ' + str(destination_ip) + ' with internal network ' + str(source_net) + ' has been added.'}
 
-        source_net = ip_network(post_data['source'])
 
-        call("nft delete element "
-             + conf('Netfilter','SNATTable')
-             + " "
-             +  conf('Netfilter','SNATMap')
-             + " { "
-             + source_net
-             + " }", shell=True)
+def snat_remove(source):
 
-        return {'message': 'Internal network ' + source_net + ' has been removed.'}
+    source_net = ip_network(source)
+
+    check_call("nft delete element "
+         + conf('Netfilter','SNATTable')
+         + " "
+         +  conf('Netfilter','SNATMap')
+         + " { "
+         + source_net
+         + " }", shell=True)
+
+    return {'message': '[SNAT] Internal network ' + source_net + ' has been removed.'}
