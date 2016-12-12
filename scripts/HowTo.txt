@@ -1,0 +1,65 @@
+\o/
+
+# Entfernt ein Element aus der map subnettoip in der Tabelle nat-fixed
+delete element nat-fixed subnettoip { 1.2.3.0/24 }
+
+# Hinzufügen eines Elements aus der map subnettoip in der Tabelle nat-fixed
+add element nat-fixed subnettoip { 100.64.1.0/24 : 141.30.202.171 }
+
+#Gibt einem die Handles fuer die Regel in der Tabelle nat-fixed an
+nft list table nat-fixed -a
+
+#Entfernt die Regel mit dem entsprechenden handle aus der Tabelle nat-fixed
+nft delete rule nat-fixed prerouting handle 4
+
+#Hinzufügen der Tabelle nat zu NFTABLES
+nft add table nat
+
+#Löscht die Tabelle nat
+nft delete table nat
+
+#Löscht alle Regeln in der Tabelle nat, Chains bleiben erhalten
+nft flush table nat nat
+
+#Anlegen der chain prerouting in der Tabelle nat, nutzt den hook prerouting und hat den Type nat, sowie die Priorität 0 (als erstes)
+nft add chain nat prerouting { type nat hook prerouting priority 0 \; }
+
+#Eine Chain die nach dem Routing das NAT anwendet
+nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
+
+# Legt eine neue Map mit dem Namen subnettoip an, die von einem ip4 Netz auf eine ip4 Adresse mapt (kann ich auch eine Ip auf ein Netz mappen?)
+nft add map nat subnettoip { type ipv4_addr: ipv4_addr\; flags interval \; }
+
+# Hinzufügen einer Regel zum matchen einer MAP für SNAT
+add rule ip nat-fixed postrouting snat ip saddr map @subnettoip;
+
+#Jumpen in eine andere chain: Fügt der Tabelle nat, in der chain postrouting-level-0 eine Regel ein, welche wenn di ip source address 100.64.0.0/12 ist und vom interface eht0 kommt in die chain postrouting-level-1-1 springt.
+nft add rule nat postrouting-level-0 ip saddr 100.64.0.0/12 oif eth0 jump postrouting-level-1-1
+
+#Einfuegen einer snat regel
+nft add rule nat postrouting-level-3-7 ip saddr 100.95.255.0/24 oif eth0 snat 141.30.233.255
+
+# Rate limiting auf 10 mbytes die Sekunde. 
+nft add rule filter input limit rate 10 mbytes/second accept
+
+#Carrier grade NAT
+100.64.0.0/10
+
+ln(6000) = 9
+log8(6000) = 5
+
+24 - 3 = 21 (8 24ger Netze)
+
+Wenn alle Ebenen 8 groß sind, dann brauchen wir 256 * 8 ^ 5 Adressen, so viele Adressen hat ein /10 nicht ...
+
+Daher wird die erste Ebene kleiner gemacht, Aufteilung für den Baum: 2 * 8 * 8 * 8 * 8
+
+24 - 4 * 3 - 1 = 11
+
+#Subnetz für die Nutzer
+1             2             8             8
+100.64.0.0/11 100.64.0.0/12 100.64.0.0/15 ...
+                            100.78.0.0/15 ...
+              100.80.0.0/12 100.80.0.0/15 ...
+                            100.94.0.0/15 ...
+
