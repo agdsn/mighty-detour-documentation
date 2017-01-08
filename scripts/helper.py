@@ -5,8 +5,8 @@ import ipaddress
 nftBase = ""
 iptBase = "iptables "
 table = "nat"
-interface = "eth1"
-public_ip = ipaddress.ip_address("192.168.0.0")
+interface = "eth5.300"
+public_ip = ipaddress.ip_address("192.168.0.19")
 private_net = ipaddress.ip_network("100.64.0.0/10", False)
 
 
@@ -37,8 +37,8 @@ def generateTree():
     print('#!/usr/sbin/nft')
     print(nftBase + "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}")
     print(nftBase + "add chain " + table + " postrouting { type nat hook postrouting priority 0 ;}")
-    print(nftBase + "add rule " + table + " postouting meta nftrace set 1")
-    #print(nftBase + "add rule " + table + " preouting meta nftrace set 1")
+    print(nftBase + "add rule " + table + " postrouting meta nftrace set 1")
+    #print(nftBase + "add rule " + table + " prerouting meta nftrace set 1")
     print(nftBase + "add chain " + table + " postrouting-level-0")
     print(
         nftBase + "add rule " + table + " postrouting ip saddr 100.64.0.0/12 oif " + interface + " goto postrouting-level-0")
@@ -111,6 +111,19 @@ def createLevelIptable(net, pref, level):
             sub) + " oif " + interface + " goto " + newPref)
         createLevel(sub, newPref, level + 1)
         i += 1
+
+def generateSingleDNAT():
+    print('#!/usr/sbin/nft')
+    print(nftBase + "add chain " + table + " postrouting { type nat hook postrouting priority 100 ;}")
+    print(nftBase + "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}")
+    print(nftBase + "add rule nat prerouting ip daddr 192.168.0.10 tcp dport 9999 dnat 100.64.1.1")
+
+def ip_interface():
+    external_ip = ipaddress.ip_address("192.168.0.10")
+    for i in range(0,6000):
+         call("ip addr add " + str(external_ip) + "/16 dev eth5.300", shell=True)
+         external_ip = external_ip + 1
+
 
 
 generateTree()
