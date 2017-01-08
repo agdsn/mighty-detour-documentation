@@ -3,6 +3,7 @@
 import ipaddress
 
 nftBase = ""
+iptBase = "iptables "
 table = "nat"
 interface = "eth1"
 public_ip = ipaddress.ip_address("192.168.0.0")
@@ -21,7 +22,7 @@ def createLevel(net, pref, level):
         print(nftBase + "add chain " + table + " " + newPref)
         print(nftBase + "add rule " + table + " " + pref + " ip saddr " + str(sub) + " oif " + interface + " goto " + newPref)
         createLevel(sub, newPref, level + 1)
-        i += 1
+        i += 1; 
 
 
 def createLeafs(net, prefix):
@@ -34,7 +35,10 @@ def createLeafs(net, prefix):
 
 def generateTree():
     print('#!/usr/sbin/nft')
+    print(nftBase + "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}")
     print(nftBase + "add chain " + table + " postrouting { type nat hook postrouting priority 0 ;}")
+    print(nftBase + "add rule " + table + " postouting meta nftrace set 1")
+    #print(nftBase + "add rule " + table + " preouting meta nftrace set 1")
     print(nftBase + "add chain " + table + " postrouting-level-0")
     print(
         nftBase + "add rule " + table + " postrouting ip saddr 100.64.0.0/12 oif " + interface + " goto postrouting-level-0")
@@ -73,6 +77,40 @@ def generateRateLimitMap():
         print(nftBase + "add chain " + table + " ratelimit-" + str(sub))
         print(nftBase + "add element " + table + " iptoverdict { " + str(sub) + " : goto " + " ratelimit-" + str(sub) + " }")
         print(nftBase + "add rule " + table + " ratelimit-" + str(sub) + " limit rate 1 mbytes/second accept")
+
+def generateTreeIpTables():
+    print('#!/bin/sh')
+    print(iptBase + "-t " + table + "-N postrouting-level-0")
+    print(iptBase + "-t " + table + "-A POSTROUTING -s 100.64.0.0/12 -i " + interface + " -j postrouting-level-0")
+    network1 = ipaddress.ip_network("100.64.0.0/12", False)
+    createLevel(network1, "postrouting-level-0", 0)
+
+    print(iptBase + "-t " + table + "-N postrouting-level-1")
+    print(iptBase + "-t " + table + "-A POSTROUTING -s 100.80.0.0/12 -i " + interface + "-j postrouting-level-1")
+    network2 = ipaddress.ip_network("100.80.0.0/12", False)
+    createLevel(network2, "postrouting-level-1", 0)
+
+def createLeafsIptables(net, prefix):
+    global public_ip
+    subnets = net.subnets(prefixlen_diff=3)
+    for sub in subnets:
+        print(nftBase + "add rule " + table + " " + prefix + " ip saddr " + str(sub) + " oif " + interface + " snat " + str(public_ip))
+        public_ip += 1
+
+def createLevelIptable(net, pref, level):
+    if level >= 3:
+        return createLeafs(net, pref)
+
+    subnets = net.subnets(prefixlen_diff=3)
+
+    i = 0
+    for sub in subnets:
+        newPref = pref + "-" + str(i)
+        print(nftBase + "add chain " + table + " " + newPref)
+        print(nftBase + "add rule " + table + " " + pref + " ip saddr " + str(
+            sub) + " oif " + interface + " goto " + newPref)
+        createLevel(sub, newPref, level + 1)
+        i += 1
 
 
 generateTree()
