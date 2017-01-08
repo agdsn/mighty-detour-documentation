@@ -83,33 +83,32 @@ def generateTreeIpTables():
     print(iptBase + "-t " + table + "-N postrouting-level-0")
     print(iptBase + "-t " + table + "-A POSTROUTING -s 100.64.0.0/12 -i " + interface + " -j postrouting-level-0")
     network1 = ipaddress.ip_network("100.64.0.0/12", False)
-    createLevel(network1, "postrouting-level-0", 0)
+    createLevelIptable(network1, "postrouting-level-0", 0)
 
     print(iptBase + "-t " + table + "-N postrouting-level-1")
     print(iptBase + "-t " + table + "-A POSTROUTING -s 100.80.0.0/12 -i " + interface + "-j postrouting-level-1")
     network2 = ipaddress.ip_network("100.80.0.0/12", False)
-    createLevel(network2, "postrouting-level-1", 0)
+    createLevelIptable(network2, "postrouting-level-1", 0)
 
 def createLeafsIptables(net, prefix):
     global public_ip
     subnets = net.subnets(prefixlen_diff=3)
     for sub in subnets:
-        print(nftBase + "add rule " + table + " " + prefix + " ip saddr " + str(sub) + " oif " + interface + " snat " + str(public_ip))
+        print(iptBase + "-t " + table + " -A " + prefix + " -s " + str(sub) + " -o " + interface + " -j SNAT --to " + str(public_ip))
         public_ip += 1
 
 def createLevelIptable(net, pref, level):
     if level >= 3:
-        return createLeafs(net, pref)
+        return createLeafsIptables(net, pref)
 
     subnets = net.subnets(prefixlen_diff=3)
 
     i = 0
     for sub in subnets:
         newPref = pref + "-" + str(i)
-        print(nftBase + "add chain " + table + " " + newPref)
-        print(nftBase + "add rule " + table + " " + pref + " ip saddr " + str(
-            sub) + " oif " + interface + " goto " + newPref)
-        createLevel(sub, newPref, level + 1)
+        print(iptBase + "-t " + table + " -N " + newPref)
+        print(iptBase + "-t " + table + " -A " + pref + " -s " + str(sub) + " -i " + interface + " -j " + newPref)
+        createLevelIptable(sub, newPref, level + 1)
         i += 1
 
 def generateSingleDNAT():
@@ -121,11 +120,13 @@ def generateSingleDNAT():
 def ip_interface():
     external_ip = ipaddress.ip_address("192.168.0.10")
     for i in range(0,6000):
-         call("ip addr add " + str(external_ip) + "/16 dev eth5.300", shell=True)
+         call("ip addr add " + str(external_ip) + "/16 dev " + interface, shell=True)
          external_ip = external_ip + 1
 
 
 
-generateTree()
+#generateTree()
+generateTreeIpTables()
 #generateMap()
 #generateRateLimitMap()
+#generateSingleDNAT()

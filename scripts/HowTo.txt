@@ -42,6 +42,7 @@ nft add rule nat postrouting-level-3-7 ip saddr 100.95.255.0/24 oif eth0 snat 14
 # Rate limiting auf 10 mbytes die Sekunde. 
 nft add rule filter input limit rate 10 mbytes/second accept
 
+------------------------------------------------------------------------------------------------------
 #Carrier grade NAT
 100.64.0.0/10
 
@@ -62,4 +63,40 @@ Daher wird die erste Ebene kleiner gemacht, Aufteilung für den Baum: 2 * 8 * 8 
                             100.78.0.0/15 ...
               100.80.0.0/12 100.80.0.0/15 ...
                             100.94.0.0/15 ...
+
+------------------------------------------------------------------------------------------------------
+#IP Tables Anweisungen für NAT
+
+#Chains der Tabelle nat anzeigen lassen
+iptables -t nat -L
+
+#Eine neue Chain hinzufügen
+iptables -t nat -N custom-chain
+
+#Von der Chain POSTROUTING zur neuen Chain custom-chain springen
+iptables -t nat -A POSTROUTING -j custom-chain
+
+#Sprung von POSTROUTING nach custom-chain entfernen
+iptables -t nat -D POSTROUTING -j custom-cahin
+
+#Chain entfernen
+iptables -t nat -X custom-chain
+
+#Wenn eine bestimmtes Netz verwendet wird in eine Chain springen, alternativ mit "-i eth1" das Interface angeben.
+iptables -t nat -A POSTROUTING -s 192.168.0.0/16 {-i eth1} -j custom-chain
+
+# Source-NAT: Absender zu 123.123.123.213 aendern
+iptables [...] -j SNAT --to-source 123.123.123.123
+
+# Maskieren: Absender auf ausgehendes Netzwerkinterface aendern
+iptables [...] -j MASQUERADE
+
+# Destination-NAT: Empfaenger zu 123.123.123.123, Port 22 aendern
+iptables [...] -j DNAT --to-destination 123.123.123.123:22
+
+# Umleitung: Auf lokalen Port 8080 umleiten
+iptables [...] -j REDIRECT --to-ports 8080
+
+
+
 
