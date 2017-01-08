@@ -22,7 +22,7 @@ def createLevel(net, pref, level):
         print(nftBase + "add chain " + table + " " + newPref)
         print(nftBase + "add rule " + table + " " + pref + " ip saddr " + str(sub) + " oif " + interface + " goto " + newPref)
         createLevel(sub, newPref, level + 1)
-        i += 1; 
+        i += 1;
 
 
 def createLeafs(net, prefix):
@@ -80,13 +80,13 @@ def generateRateLimitMap():
 
 def generateTreeIpTables():
     print('#!/bin/sh')
-    print(iptBase + "-t " + table + "-N postrouting-level-0")
-    print(iptBase + "-t " + table + "-A POSTROUTING -s 100.64.0.0/12 -i " + interface + " -j postrouting-level-0")
+    print(iptBase + "-t " + table + " -N postrouting-level-0")
+    print(iptBase + "-t " + table + " -A POSTROUTING -s 100.64.0.0/12 -o " + interface + " -j postrouting-level-0")
     network1 = ipaddress.ip_network("100.64.0.0/12", False)
     createLevelIptable(network1, "postrouting-level-0", 0)
 
-    print(iptBase + "-t " + table + "-N postrouting-level-1")
-    print(iptBase + "-t " + table + "-A POSTROUTING -s 100.80.0.0/12 -i " + interface + "-j postrouting-level-1")
+    print(iptBase + "-t " + table + " -N postrouting-level-1")
+    print(iptBase + "-t " + table + " -A POSTROUTING -s 100.80.0.0/12 -o " + interface + "-j postrouting-level-1")
     network2 = ipaddress.ip_network("100.80.0.0/12", False)
     createLevelIptable(network2, "postrouting-level-1", 0)
 
