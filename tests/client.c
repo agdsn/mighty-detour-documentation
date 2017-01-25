@@ -9,20 +9,23 @@
 #include <shared.h>
 
 int create_socket(int type);
+void bind_socket(int socket_id, const char *ip_address);
 void init_tcp_connection(int socket_tcp, const char *ip_address);
 void communicate_tcp(int socket_tcp, int packet_id);
 void communicate_udp(int socket_udp, int packet_id, const char *ip_address);
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        fprintf(stderr, "client: No server ip address given");
+    if (argc != 3) {
+        fprintf(stderr, "usage: ./client SOURCE-ADDR DEST-ADDR");
         return EXIT_FAILURE;
     }
     int socket_tcp = create_socket(TCP);
     int socket_udp = create_socket(UDP);
-    init_tcp_connection(socket_tcp, argv[1]);
+    bind_socket(socket_tcp, argv[1]);
+    bind_socket(socket_udp, argv[1]);
+    init_tcp_connection(socket_tcp, argv[2]);
     communicate_tcp(socket_tcp, 42);
-    communicate_udp(socket_udp, 23, argv[1]);
+    communicate_udp(socket_udp, 23, argv[2]);
     close(socket_tcp);
     close(socket_udp);
     return 0;
@@ -35,6 +38,23 @@ int create_socket(int type) {
         exit(EXIT_FAILURE);
     }
     return new_socket;
+}
+
+void bind_socket(int socket_id, const char *ip_address) {
+    struct sockaddr_in client = {.sin_family = AF_INET,
+                                 .sin_port = 0};
+    int success = inet_aton(ip_address, &client.sin_addr);
+    if (!success) {
+        fprintf(stderr,
+                "client: Binding local socket: Invalid IP address %s\n",
+                ip_address);
+        exit(EXIT_FAILURE);
+    }
+    success = bind(socket_id, (struct sockaddr *) &client, sizeof client);
+    if (success < 0) {
+        perror("client: Binding socket");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void init_tcp_connection(int socket_tcp, const char *ip_address) {
