@@ -4,9 +4,9 @@
 enum {
     TCP = SOCK_STREAM,
     UDP = SOCK_DGRAM,
-    N_CONNECTIONS = 10,
     TCP_PORT = 80,
     UDP_PORT = 1111,
+    CLIENT_BASE_PORT = 1024,
 };
 
 struct payload {

@@ -11,16 +11,30 @@
 #include <shared.h>
 
 int create_socket(int type);
-void init_tcp_socket(int socket_tcp);
+void init_tcp_socket(int socket_tcp, int n_connections);
+void init_udp_socket(int socket_udp);
 void process_tcp_packet(int socket_tcp);
 void process_udp_packet(int socket_udp);
 
-int main(void) {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "server: usage: ./server #CONNECTIONS\n");
+        return EXIT_FAILURE;
+    }
+    int n_connections = 0;
+    if (sscanf(argv[1], "%u", &n_connections) != 1) {
+        fprintf(stderr, "server: invalid input %s\n", argv[1]);
+        return EXIT_FAILURE;
+    }
     int socket_tcp = create_socket(TCP);
     int socket_udp = create_socket(UDP);
-    init_tcp_socket(socket_tcp);
-    process_tcp_packet(socket_tcp);
-    process_udp_packet(socket_udp);
+    init_tcp_socket(socket_tcp, n_connections);
+    init_udp_socket(socket_udp);
+    // TODO parallelise
+    for (int i = 0; i < n_connections; ++i) {
+        process_tcp_packet(socket_tcp);
+        process_udp_packet(socket_udp);
+    }
     close(socket_tcp);
     close(socket_udp);
     return 0;
@@ -35,7 +49,7 @@ int create_socket(int type) {
     return new_socket;
 }
 
-void init_tcp_socket(int socket_tcp) {
+void init_tcp_socket(int socket_tcp, int n_connections) {
     struct sockaddr_in server = {.sin_family = AF_INET, .sin_port = htons(TCP_PORT),
                                  .sin_addr.s_addr = htonl(INADDR_ANY)};
     int success = bind(socket_tcp, (struct sockaddr *) &server, sizeof server);
@@ -43,9 +57,19 @@ void init_tcp_socket(int socket_tcp) {
         perror("server: Binding socket");
         exit(EXIT_FAILURE);
     }
-    success = listen(socket_tcp, N_CONNECTIONS);
+    success = listen(socket_tcp, n_connections);
     if (success < 0) {
         perror("server: Listening on socket");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void init_udp_socket(int socket_udp) {
+    struct sockaddr_in server = {.sin_family = AF_INET, .sin_port = htons(UDP_PORT),
+                                 .sin_addr.s_addr = htonl(INADDR_ANY)};
+    int success = bind(socket_udp, (struct sockaddr *) &server, sizeof server);
+    if (success < 0) {
+        perror("server: Binding socket");
         exit(EXIT_FAILURE);
     }
 }
@@ -79,13 +103,6 @@ void process_tcp_packet(int socket_tcp) {
 }
 
 void process_udp_packet(int socket_udp) {
-    struct sockaddr_in server = {.sin_family = AF_INET, .sin_port = htons(UDP_PORT),
-                                 .sin_addr.s_addr = htonl(INADDR_ANY)};
-    int success = bind(socket_udp, (struct sockaddr *) &server, sizeof server);
-    if (success < 0) {
-        perror("server: Binding socket");
-        exit(EXIT_FAILURE);
-    }
     struct sockaddr_in client = {0};
     int client_len = sizeof client;
     struct payload data;

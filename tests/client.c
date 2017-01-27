@@ -9,25 +9,37 @@
 #include <shared.h>
 
 int create_socket(int type);
-void bind_socket(int socket_id, const char *ip_address);
+void bind_socket(int socket_id, const char *ip_address, int port);
 void init_tcp_connection(int socket_tcp, const char *ip_address);
 void communicate_tcp(int socket_tcp, int packet_id);
 void communicate_udp(int socket_udp, int packet_id, const char *ip_address);
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        fprintf(stderr, "usage: ./client SOURCE-ADDR DEST-ADDR");
+    if (argc != 4) {
+        fprintf(stderr, "client: usage: ./client SADDR DADDR #CONNECTIONS\n");
         return EXIT_FAILURE;
     }
-    int socket_tcp = create_socket(TCP);
-    int socket_udp = create_socket(UDP);
-    bind_socket(socket_tcp, argv[1]);
-    bind_socket(socket_udp, argv[1]);
-    init_tcp_connection(socket_tcp, argv[2]);
-    communicate_tcp(socket_tcp, 42);
-    communicate_udp(socket_udp, 23, argv[2]);
-    close(socket_tcp);
-    close(socket_udp);
+    int n_connections = 0;
+    if (sscanf(argv[3], "%u", &n_connections) != 1) {
+        fprintf(stderr, "client: invalid input %s\n", argv[3]);
+        return EXIT_FAILURE;
+    }
+    int tcp_sockets[n_connections];
+    int udp_sockets[n_connections];
+    for (int i = 0; i < n_connections; ++i) {
+        tcp_sockets[i] = create_socket(TCP);
+        udp_sockets[i] = create_socket(UDP);
+        bind_socket(tcp_sockets[i], argv[1], CLIENT_BASE_PORT + i);
+        bind_socket(udp_sockets[i], argv[1], CLIENT_BASE_PORT + n_connections + i);
+    }
+    // TODO parallelise
+    for (int i = 0; i < n_connections; ++i) {
+        init_tcp_connection(tcp_sockets[i], argv[2]);
+        communicate_tcp(tcp_sockets[i], tcp_sockets[i]);
+        communicate_udp(udp_sockets[i], udp_sockets[i], argv[2]);
+        close(tcp_sockets[i]);
+        close(udp_sockets[i]);
+    }
     return 0;
 }
 
@@ -40,9 +52,9 @@ int create_socket(int type) {
     return new_socket;
 }
 
-void bind_socket(int socket_id, const char *ip_address) {
+void bind_socket(int socket_id, const char *ip_address, int port) {
     struct sockaddr_in client = {.sin_family = AF_INET,
-                                 .sin_port = 0};
+                                 .sin_port = port};
     int success = inet_aton(ip_address, &client.sin_addr);
     if (!success) {
         fprintf(stderr,
