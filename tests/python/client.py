@@ -3,6 +3,7 @@ import json
 import sys
 import time
 
+from gevent import pool
 from gevent import socket
 
 BASE_PORT = 5000
@@ -19,5 +20,7 @@ def communicate_tcp(id):
         print(payload)
         s.close()
 
-connections = [gevent.spawn(communicate_tcp, i) for i in range(int(sys.argv[3]))]
-gevent.joinall(connections)
+#connections = [gevent.spawn(communicate_tcp, i) for i in range(int(sys.argv[3]))]
+#gevent.joinall(connections)
+p = pool.Pool(100)
+p.map(communicate_tcp, range(int(sys.argv[3])))
