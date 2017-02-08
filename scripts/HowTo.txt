@@ -19,7 +19,7 @@ nft add table nat
 nft delete table nat
 
 #Löscht alle Regeln in der Tabelle nat, Chains bleiben erhalten
-nft flush table nat nat
+nft flush table nat
 
 #Anlegen der chain prerouting in der Tabelle nat, nutzt den hook prerouting und hat den Type nat, sowie die Priorität 0 (als erstes)
 nft add chain nat prerouting { type nat hook prerouting priority 0 \; }
@@ -82,8 +82,8 @@ iptables -t nat -D POSTROUTING -j custom-cahin
 #Chain entfernen
 iptables -t nat -X custom-chain
 
-#Wenn eine bestimmtes Netz verwendet wird in eine Chain springen, alternativ mit "-i eth1" das Interface angeben.
-iptables -t nat -A POSTROUTING -s 192.168.0.0/16 {-i eth1} -j custom-chain
+#Wenn eine bestimmtes Netz verwendet wird in eine Chain springen, alternativ mit "-o eth1" das Interface angeben.
+iptables -t nat -A POSTROUTING -s 192.168.0.0/16 {-o eth1} -j custom-chain
 
 # Source-NAT: Absender zu 123.123.123.213 aendern
 iptables [...] -j SNAT --to-source 123.123.123.123
