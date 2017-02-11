@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, deferred
 from celery import Celery
 import configparser
 
-from lib.nft_tree import initializeNAT
+from lib.nft_tree import initializeNAT,updateSingleMapping
 
 config = configparser.ConfigParser()
 config.read('dsnat.ini')
@@ -49,11 +49,16 @@ class Translation(Base):
 
 
 @app.task
-def update_static(net_passed):
+def update_mapping(net_passed):
     net = IPv4Network(net_passed)
     session = Session()
 
     trans = session.query(Translation).filter(Translation.translated_net == net_passed).one()
+
+    updateSingleMapping(IPv4Network(trans['translated_net']),
+                        IPv4Address(trans['public_ip']),
+                        IPv4Network(config.get('CGN', 'Net')),
+                        config.get('NFTTree', 'preflength'))
 
 
 def initialize_ntf():

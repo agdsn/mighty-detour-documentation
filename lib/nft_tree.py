@@ -1,4 +1,5 @@
-from ipaddress import IPv4Address, IPv4Network
+from ipaddress import IPv4Network
+import subprocess
 
 nftCall = "/usr/sbin/nft"
 nftPreamble = "#!/usr/sbin/nft"
@@ -7,9 +8,6 @@ tmpFile = "/tmp/nft.rules"
 maxLevel = 3
 
 def is_subnet_of(a, b):
-   """
-   Returns boolean: is `a` a subnet of `b`?
-   """
    a_len = a.prefixlen
    b_len = b.prefixlen
    return a_len >= b_len and a.supernet(a_len - b_len) == b
@@ -22,20 +20,39 @@ def calculate_chain_name(priv_net, subnet, preflength):
     for sub in subnets:
         if is_subnet_of(subnet,sub):
             path += str(i)
-            current_net = subnet
+            current_net = sub
             break
         i += 1
-    while current_net.prefixlen > subnet.prefixlen:
+    while current_net.prefixlen + preflength < subnet.prefixlen:
         path += "-"
         i = 0
         subnets = current_net.subnets(prefixlen_diff=preflength)
         for sub in subnets:
-            if subnet in sub:
+            if is_subnet_of(subnet,sub):
                 path += str(i)
-                current_net = subnet
+                current_net = sub
                 break
             i += 1
     return path
+
+def updateSingleMapping(private_net, public_ip, all_privs, preflength):
+    output = subprocess.check_output(nftCall + " list table nat | grep " + str(private_net), shell=True)
+    if "handle" in output:
+        # private net already mapped to something
+
+        # TODO: delete existing conntrackd-state
+
+        parsed = output.split("handle ")
+        subprocess.call(nftCall + " replace rule " + table + " "
+                        + calculate_chain_name(all_privs, private_net, preflength)
+                        + " handle " + parsed[1] + " ip saddr " + str(private_net)
+                        + " snat to " + str(public_ip), shell=True)
+    else:
+        # private net not yet mapped
+        subprocess.call(nftCall + " add rule " + table + " "
+                        + calculate_chain_name(all_privs, private_net, preflength)
+                        + " ip saddr " + str(private_net)
+                        + " snat to " + str(public_ip), shell=True)
 
 
 def createLevel(net, pref, level, preflength, translations):
