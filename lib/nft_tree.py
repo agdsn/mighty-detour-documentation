@@ -6,13 +6,21 @@ table = "nat"
 tmpFile = "/tmp/nft.rules"
 maxLevel = 3
 
+def is_subnet_of(a, b):
+   """
+   Returns boolean: is `a` a subnet of `b`?
+   """
+   a_len = a.prefixlen
+   b_len = b.prefixlen
+   return a_len >= b_len and a.supernet(a_len - b_len) == b
+
 def calculate_chain_name(priv_net, subnet, preflength):
     path = "postrouting-level-"
     subnets = priv_net.subnets(prefixlen_diff=12 - priv_net.prefixlen)
-    current_net = IPv4Network()
+    current_net = IPv4Network('0.0.0.0/0')
     i = 0
     for sub in subnets:
-        if subnet in sub:
+        if is_subnet_of(subnet,sub):
             path += str(i)
             current_net = subnet
             break

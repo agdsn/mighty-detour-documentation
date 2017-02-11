@@ -20,14 +20,14 @@ app = Celery('tasks', broker = 'pyamqp://' + config.get('Broker', 'User') + '@' 
 i = 0
 engine = []
 while config.has_section("Database" + str(i)):
-    engine[i] = create_engine('postgres://'
+    engine.append(create_engine('postgres://'
                            + config.get('Database' + str(i), 'User')
                            + ':'
                            + config.get('Database' + str(i), 'Password')
                            + '@'
                            + config.get('Database' + str(i), 'Host')
                            + '/'
-                           + config.get('Database' + str(i), 'DB'), echo=True)
+                           + config.get('Database' + str(i), 'DB'), echo=True))
     i += 1
 
 Session = sessionmaker(bind=engine[0])
