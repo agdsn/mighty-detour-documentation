@@ -1,4 +1,3 @@
-Flask
-Flask-RESTful
-pyroute2
 configparser
+celery
+sqlalchemy

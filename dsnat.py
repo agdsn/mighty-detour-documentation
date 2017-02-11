@@ -1,7 +1,9 @@
-from flask import Flask
-from rest_api.networks import network_add, network_remove, network_list
-from flask_restful import Api
+from celery import Celery
+
 from subprocess import call
+
+
+app = Celery('tasks', broker = 'pyamqp://guest@localhost//')
 
 
 app = Flask(__name__)
@@ -22,4 +24,4 @@ api.add_resource(network_add, '/network/add')
 api.add_resource(network_remove, '/network/remove')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debuovirtg=True)
