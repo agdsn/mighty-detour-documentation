@@ -1,4 +1,4 @@
-from ipaddress import IPv4Address
+from ipaddress import IPv4Address, IPv4Network
 
 from sqlalchemy import Column
 from sqlalchemy import PrimaryKeyConstraint
@@ -6,10 +6,11 @@ from sqlalchemy import String
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, deferred
 from celery import Celery
 import configparser
 
+from lib.nft_tree import generateTree
 
 config = configparser.ConfigParser()
 config.read('dsnat.ini')
@@ -27,13 +28,10 @@ Base = declarative_base()
 
 class Translation(Base):
     __tablename__ = 'translation'
-    __table_args__ = (
-        PrimaryKeyConstraint('public_ip', 'translated_net'),
-    )
 
     public_ip = Column(CIDR, nullable=False)
-    translated_net = Column(CIDR, nullable=False)
-    comment = Column(String)
+    translated_net = Column(CIDR, nullable=False, primary_key=True)
+    comment = deferred(Column(String))
 
     def __repr__(self):
         return "<Translation(public_ip='%s', translated_net='%s', comment='%s')>" % (
@@ -42,8 +40,21 @@ class Translation(Base):
 
 
 @app.task
-def update_static(ip_passed):
-    ip = IPv4Address(ip_passed)
+def update_static(net_passed):
+    net = IPv4Network(net_passed)
+    session = Session()
+
+    trans = session.query(Translation).filter(Translation.translated_net == net_passed).one()
+
+
+def initialize_ntf():
+    session = Session()
+    trans = session.query(Translation).all()
+    d = dict
+    for t in trans:
+        d[t.translated_net] = t.public_ip
+
+    generateTree(private_net=config.get('CGN', 'Net'),preflength=config.get('NFTTree', 'preflength'),translations=d)
 
 
 def create_tables():
