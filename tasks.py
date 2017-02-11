@@ -10,18 +10,27 @@ from sqlalchemy.orm import sessionmaker, deferred
 from celery import Celery
 import configparser
 
-from lib.nft_tree import generateTree
+from lib.nft_tree import initializeNAT
 
 config = configparser.ConfigParser()
 config.read('dsnat.ini')
 
 app = Celery('tasks', broker = 'pyamqp://' + config.get('Broker', 'User') + '@' + config.get('Broker', 'Host') + '//')
 
+i = 0
+engine = []
+while config.has_section("Database" + str(i)):
+    engine[i] = create_engine('postgres://'
+                           + config.get('Database' + str(i), 'User')
+                           + ':'
+                           + config.get('Database' + str(i), 'Password')
+                           + '@'
+                           + config.get('Database' + str(i), 'Host')
+                           + '/'
+                           + config.get('Database' + str(i), 'DB'), echo=True)
+    i += 1
 
-engine = create_engine('postgres://' + config.get('Databases', 'StaticUser') + ':' +config.get('Databases', 'StaticPassword')+ '@'
-                       + config.get('Databases', 'StaticHost') + '/' + config.get('Databases', 'StaticDB'), echo=True)
-
-Session = sessionmaker(bind=engine)
+Session = sessionmaker(bind=engine[0])
 
 Base = declarative_base()
 
@@ -50,11 +59,11 @@ def update_static(net_passed):
 def initialize_ntf():
     session = Session()
     trans = session.query(Translation).all()
-    d = dict
+    d = {}
     for t in trans:
-        d[t.translated_net] = t.public_ip
+        d[IPv4Network(t.translated_net)] = t.public_ip
 
-    generateTree(private_net=IPv4Network(config.get('CGN', 'Net')),preflength=int(config.get('NFTTree', 'preflength')),translations=d)
+    initializeNAT(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d)
 
 
 def create_tables():

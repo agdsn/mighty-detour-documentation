@@ -1,15 +1,37 @@
 from ipaddress import IPv4Address, IPv4Network
 
-from subprocess import call
-
 nftCall = "/usr/sbin/nft"
 nftPreamble = "#!/usr/sbin/nft"
 table = "nat"
 tmpFile = "/tmp/nft.rules"
+maxLevel = 3
+
+def calculate_chain_name(priv_net, subnet, preflength):
+    path = "postrouting-level-"
+    subnets = priv_net.subnets(prefixlen_diff=12 - priv_net.prefixlen)
+    current_net = IPv4Network()
+    i = 0
+    for sub in subnets:
+        if subnet in sub:
+            path += str(i)
+            current_net = subnet
+            break
+        i += 1
+    while current_net.prefixlen > subnet.prefixlen:
+        path += "-"
+        i = 0
+        subnets = current_net.subnets(prefixlen_diff=preflength)
+        for sub in subnets:
+            if subnet in sub:
+                path += str(i)
+                current_net = subnet
+                break
+            i += 1
+    return path
 
 
 def createLevel(net, pref, level, preflength, translations):
-    if level >= 3:
+    if level >= maxLevel:
         return createLeafs(net, pref, preflength=preflength, translations=translations)
 
     subnets = net.subnets(prefixlen_diff=preflength)
@@ -21,7 +43,7 @@ def createLevel(net, pref, level, preflength, translations):
         newPref = pref + "-" + str(i)
         src += "add chain " + table + " " + newPref + "\n"
         src += "add rule " + table + " " + pref + " ip saddr " + str(sub) + " goto " + newPref + "\n"
-        src += createLevel(sub, newPref, level + 1, translations=translations) + "\n"
+        src += createLevel(sub, newPref, level + 1, translations=translations, preflength=preflength) + "\n"
         i += 1;
 
     return src
@@ -38,8 +60,9 @@ def createLeafs(net, prefix, preflength, translations):
     return src
 
 
-def generateTree(private_net, translations, preflength):
-    src  = nftPreamble
+def initializeNAT(private_net, translations, preflength=3):
+    src = nftPreamble + "\n"
+    src += "\n"
     src += "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}\n"
     src += "add chain " + table + " postrouting { type nat hook postrouting priority 0 ;}\n"
     src += "add rule " + table + " postrouting meta nftrace set 1\n"
@@ -53,8 +76,8 @@ def generateTree(private_net, translations, preflength):
             src += createLevel(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
             i += 1
     else:
+        src += "add chain " + table + " postrouting-level-0\n"
         src += createLevel(private_net, "postrouting-level-0", 0, translations=translations) + "\n"
-        src += "add chain " + table + " postrouting-level-0" + "\n"
         src += "add rule " + table + " postrouting ip saddr " + str(private_net) + " goto postrouting-level-0\n"
 
     # write stuff to tmpFile
@@ -66,6 +89,8 @@ def generateTree(private_net, translations, preflength):
     #call(nftCall + " flush table " + table, shell=True)
     # eXecutor!
     #call(nftCall + " -f " +  tmpFile, shell=True)
+    # drop file
+    #call("/bin/rm " + tmpFile, shell=True)
 
 
 def generateRateLimitMap():
