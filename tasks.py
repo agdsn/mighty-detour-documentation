@@ -1,6 +1,7 @@
 from ipaddress import IPv4Address
 
 from sqlalchemy import Column
+from sqlalchemy import PrimaryKeyConstraint
 from sqlalchemy import String
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import CIDR
@@ -26,6 +27,9 @@ Base = declarative_base()
 
 class Translation(Base):
     __tablename__ = 'translation'
+    __table_args__ = (
+        PrimaryKeyConstraint('public_ip', 'translated_net'),
+    )
 
     public_ip = Column(CIDR, nullable=False)
     translated_net = Column(CIDR, nullable=False)
@@ -40,7 +44,6 @@ class Translation(Base):
 @app.task
 def update_static(ip_passed):
     ip = IPv4Address(ip_passed)
-
 
 
 def create_tables():
