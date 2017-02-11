@@ -18,7 +18,7 @@ config.read('dsnat.ini')
 app = Celery('tasks', broker = 'pyamqp://' + config.get('Broker', 'User') + '@' + config.get('Broker', 'Host') + '//')
 
 
-engine = create_engine('postgres://' + config.get('Databases', 'StaticUser') + '@'
+engine = create_engine('postgres://' + config.get('Databases', 'StaticUser') + ':' +config.get('Databases', 'StaticPassword')+ '@'
                        + config.get('Databases', 'StaticHost') + '/' + config.get('Databases', 'StaticDB'), echo=True)
 
 Session = sessionmaker(bind=engine)
@@ -54,7 +54,7 @@ def initialize_ntf():
     for t in trans:
         d[t.translated_net] = t.public_ip
 
-    generateTree(private_net=config.get('CGN', 'Net'),preflength=config.get('NFTTree', 'preflength'),translations=d)
+    generateTree(private_net=IPv4Network(config.get('CGN', 'Net')),preflength=int(config.get('NFTTree', 'preflength')),translations=d)
 
 
 def create_tables():

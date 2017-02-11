@@ -4,7 +4,6 @@ from subprocess import call
 
 nftCall = "/usr/sbin/nft"
 nftPreamble = "#!/usr/sbin/nft"
-iptBase = "iptables "
 table = "nat"
 tmpFile = "/tmp/nft.rules"
 
@@ -49,9 +48,9 @@ def generateTree(private_net, translations, preflength):
         subnets = private_net.subnets(prefixlen_diff=12 - private_net.prefixlen)
         i = 0
         for sub in subnets:
-            src += "add chain " + table + " postrouting-level-" + i + "\n"
-            src += "add rule " + table + " postrouting ip saddr " + str(sub) + " goto postrouting-level-" + i + "\n"
-            src += createLevel(sub, "postrouting-level-" + i, 0, translations=translations) + "\n"
+            src += "add chain " + table + " postrouting-level-" + str(i) + "\n"
+            src += "add rule " + table + " postrouting ip saddr " + str(sub) + " goto postrouting-level-" + str(i) + "\n"
+            src += createLevel(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
             i += 1
     else:
         src += createLevel(private_net, "postrouting-level-0", 0, translations=translations) + "\n"
