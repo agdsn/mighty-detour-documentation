@@ -156,12 +156,24 @@ def initialize(private_net, translations, throttles, preflength=3):
 
     # drop previous content
     logging.debug("Drop previous configuration and apply new one")
-    subprocess.call(nftCall + " delete table " + table, shell=True)
-    subprocess.call(nftCall + " delete table " + table_throttle, shell=True)
+    drop_table_if_exists(table)
+    drop_table_if_exists(table_throttle)
     # eXecutor!
     subprocess.call(nftCall + " -f " +  tmpFile, shell=True)
     # drop file
     #subprocess.call("/bin/rm " + tmpFile, shell=True)
+
+
+def drop_table_if_exists(tab):
+    logging.debug("Drop table %s if it exists", tab)
+    command = nftCall + " list tables"
+    output = subprocess.check_output("", shell=True).decode("utf-8")
+    if tab in output:
+        command = nftCall + " delete table " + tab
+        subprocess.call(command, shell=True)
+        logging.info("Table %s has been dropped", tab)
+    else:
+        logging.debug("Table %s has not been dropped since it does not exist" , tab)
 
 
 def add_throttle(throttle):
