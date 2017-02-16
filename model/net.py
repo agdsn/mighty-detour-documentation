@@ -1,6 +1,7 @@
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import CIDR
+from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -9,7 +10,7 @@ Base = declarative_base()
 class Translation(Base):
     __tablename__ = 'translation'
 
-    public_ip = Column(CIDR, nullable=False)
+    public_ip = Column(INET, nullable=False)
     translated_net = Column(CIDR, nullable=False)
     comment = Column(String)
 
