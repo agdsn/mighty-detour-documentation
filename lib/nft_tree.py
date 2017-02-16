@@ -1,5 +1,6 @@
-from ipaddress import IPv4Network
+from ipaddress import IPv4Network, IPv4Address
 import subprocess
+import logging
 
 nftCall = "/usr/local/sbin/nft"
 nftPreamble = "#!/usr/local/sbin/nft"
@@ -40,30 +41,44 @@ def calculate_chain_name(priv_net, subnet, preflength):
 
 
 def updateSingleMapping(private_net, public_ip, all_privs, preflength):
+    logging.info("Should update a single mapping (private: %s, public: %s)", private_net, public_ip)
     command = nftCall + " list table " + table + " -a | /bin/grep " + str(private_net)
-    print("Execute: " + command + "\n")
-    output = str(subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT))
-    print("command output: " + output + "\n")
+    logging.debug("Execute: " + command)
+    output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
+    if output.count() > 1:
+        logging.warning("The private subnet %s is present multiple times!", private_net)
+        for o in output:
+            parsed_handle = o.split(" # handle ")
+            parsed_destination = parsed_handle[0].split(" to ")
+            logging.warning("%s is already mapped to %s", private_net, parsed_destination[1])
+            
+    logging.debug("Command output: " + output[0])
     if "handle" in output:
         # private net already mapped to something
 
         # TODO: delete existing conntrackd-state
-        # TODO: if net is already present in correct configuration: do nothing!
 
-        parsed = output.split("handle ")
-        command = nftCall + " replace rule " + table + " " \
+        parsed_handle = output[0].split(" # handle ")
+        parsed_destination = parsed_handle[0].split(" to ")
+
+        if IPv4Address(parsed_destination[1]) == public_ip:
+            logging.info("The new public_ip %s is already configured!", public_ip)
+        else:
+            logging.debug("Going to replace the current public ip %s with %s for private subnet %s", parsed_destination[1], public_ip, private_net)
+            command = nftCall + " replace rule " + table + " " \
                         + calculate_chain_name(all_privs, private_net, preflength) \
-                        + " handle " + parsed[1] + " ip saddr " + str(private_net) \
+                        + " handle " + parsed_handle[1] + " ip saddr " + str(private_net) \
                         + " snat to " + str(public_ip)
-        print("Execute: " + command)
-        subprocess.call(command, shell=True)
+            logging.debug("Execute: " + command)
+            subprocess.call(command, shell=True)
     else:
         # private net not yet mapped
+        logging.debug("Going to add new public ip %s for private subnet %s", public_ip, private_net)
         command = nftCall + " add rule " + table + " " \
                         + calculate_chain_name(all_privs, private_net, preflength) \
                         + " ip saddr " + str(private_net) \
                         + " snat to " + str(public_ip)
-        print("Execute: " + command)
+        logging.debug("Execute: " + command)
         subprocess.call(command, shell=True)
 
 
