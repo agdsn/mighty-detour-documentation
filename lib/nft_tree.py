@@ -85,7 +85,7 @@ def createLeafs(net, prefix, preflength, translations):
     for sub in subnets:
         if sub in translations:
             # only add rule if translation is present
-            src += "add rule " + table + " " + prefix + " ip saddr " + str(sub) + " snat " + translations[sub] + "\n"
+            src += "add rule " + table + " " + prefix + " ip saddr " + str(sub) + " snat " + str(translations[sub]) + "\n"
 
     return src
 
@@ -121,7 +121,7 @@ def initializeNAT(private_net, translations, preflength=3):
     # eXecutor!
     subprocess.call(nftCall + " -f " +  tmpFile, shell=True)
     # drop file
-    #subprocess.call("/bin/rm " + tmpFile, shell=True)
+    subprocess.call("/bin/rm " + tmpFile, shell=True)
 
 
 def generateRateLimitMap():

@@ -55,10 +55,10 @@ def update_mapping(net_passed):
 
     trans = session.query(Translation).filter(Translation.translated_net == net_passed).one()
 
-    updateSingleMapping(IPv4Network(trans['translated_net']),
-                        IPv4Address(trans['public_ip']),
-                        IPv4Network(config.get('CGN', 'Net')),
-                        config.get('NFTTree', 'preflength'))
+    updateSingleMapping(private_net=trans.translated_net,
+                        public_ip=trans.public_ip,
+                        all_privs=IPv4Network(config.get('CGN', 'Net')),
+                        preflength=config.get('NFTTree', 'preflength'))
 
 
 def initialize_nft():
@@ -72,4 +72,4 @@ def initialize_nft():
 
 
 def create_tables():
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine[0])
