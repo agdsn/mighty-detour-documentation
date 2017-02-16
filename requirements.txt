@@ -1,3 +1,4 @@
 configparser
 celery
 sqlalchemy
+psycopg2

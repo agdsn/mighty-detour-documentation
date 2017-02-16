@@ -1,8 +1,8 @@
 from ipaddress import IPv4Network
 import subprocess
 
-nftCall = "/usr/sbin/nft"
-nftPreamble = "#!/usr/sbin/nft"
+nftCall = "/usr/local/sbin/nft"
+nftPreamble = "#!/usr/local/sbin/nft"
 table = "nat"
 tmpFile = "/tmp/nft.rules"
 maxLevel = 3
@@ -93,6 +93,7 @@ def createLeafs(net, prefix, preflength, translations):
 def initializeNAT(private_net, translations, preflength=3):
     src = nftPreamble + "\n"
     src += "\n"
+    src += "add table " + table + "\n"
     src += "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}\n"
     src += "add chain " + table + " postrouting { type nat hook postrouting priority 0 ;}\n"
     src += "add rule " + table + " postrouting meta nftrace set 1\n"
@@ -116,11 +117,11 @@ def initializeNAT(private_net, translations, preflength=3):
     file.close()
 
     # drop previous content
-    subprocess.call(nftCall + " flush table " + table, shell=True)
+    subprocess.call(nftCall + " delete table " + table, shell=True)
     # eXecutor!
     subprocess.call(nftCall + " -f " +  tmpFile, shell=True)
     # drop file
-    subprocess.call("/bin/rm " + tmpFile, shell=True)
+    #subprocess.call("/bin/rm " + tmpFile, shell=True)
 
 
 def generateRateLimitMap():

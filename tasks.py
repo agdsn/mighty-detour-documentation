@@ -66,7 +66,7 @@ def initialize_ntf():
     trans = session.query(Translation).all()
     d = {}
     for t in trans:
-        d[IPv4Network(t.translated_net)] = t.public_ip
+        d[IPv4Network(t.translated_net)] = IPv4Address(t.public_ip)
 
     initializeNAT(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d)
 
