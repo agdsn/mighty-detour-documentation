@@ -1,10 +1,10 @@
 from ipaddress import IPv4Address, IPv4Network
 
 from sqlalchemy import Column
-from sqlalchemy import PrimaryKeyConstraint
 from sqlalchemy import String
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import CIDR
+from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, deferred
 from celery import Celery
@@ -38,7 +38,7 @@ Base = declarative_base()
 class Translation(Base):
     __tablename__ = 'translation'
 
-    public_ip = Column(CIDR, nullable=False)
+    public_ip = Column(INET, nullable=False)
     translated_net = Column(CIDR, nullable=False, primary_key=True)
     comment = deferred(Column(String))
 
@@ -61,7 +61,7 @@ def update_mapping(net_passed):
                         config.get('NFTTree', 'preflength'))
 
 
-def initialize_ntf():
+def initialize_nft():
     session = Session()
     trans = session.query(Translation).all()
     d = {}
