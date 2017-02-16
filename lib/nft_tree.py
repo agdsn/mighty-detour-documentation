@@ -40,11 +40,11 @@ def calculate_chain_name(priv_net, subnet, preflength):
 
 
 def updateSingleMapping(private_net, public_ip, all_privs, preflength):
-    command = nftCall + " list table " + table + " | /bin/grep " + str(private_net)
+    command = nftCall + " list table " + table + " -a | /bin/grep " + str(private_net)
     print("Execute: " + command + "\n")
-    output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
-    print("command output: " + str(output) + "\n")
-    if "handle" in str(output):
+    output = str(subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT))
+    print("command output: " + output + "\n")
+    if "handle" in output:
         # private net already mapped to something
 
         # TODO: delete existing conntrackd-state
