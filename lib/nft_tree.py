@@ -165,10 +165,10 @@ def initialize(private_net, translations, throttles, preflength=3):
 
 def add_throttle(throttle):
     logging.info("Add throttling rule for private subnet %s with speed %s kbytes/sec",
-                 throttle.translation_net, throttle.speed)
-    chain_name = str(IPv4Network(throttle.translation_net).network_address).replace(".","-")
+                 throttle.translated_net, throttle.speed)
+    chain_name = str(IPv4Network(throttle.translated_net).network_address).replace(".","-")
     src = "add chain " + table_throttle + " ratelimit-" + chain_name + "\n"
-    src += "add element " + table_throttle + " iptoverdict { " + str(throttle.translation_net) + " : goto " + " ratelimit-" + chain_name + " }\n"
+    src += "add element " + table_throttle + " iptoverdict { " + str(throttle.translated_net) + " : goto " + " ratelimit-" + chain_name + " }\n"
     src += "add rule " + table_throttle + " ratelimit-" + chain_name + " limit rate " + str(throttle.speed) + " kbytes/second accept\n"
 
     return src

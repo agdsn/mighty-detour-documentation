@@ -78,7 +78,7 @@ def initialize_nft():
     d = {}
     for t in trans:
         d[IPv4Network(t.translated_net)] = IPv4Address(t.public_ip)
-    throttles = session.query(Translation).all()
+    throttles = session.query(Throttle).all()
 
     initialize(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d, throttles=throttles)
 
