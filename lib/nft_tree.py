@@ -41,18 +41,23 @@ def updateSingleMapping(private_net, public_ip, all_privs, preflength):
         # private net already mapped to something
 
         # TODO: delete existing conntrackd-state
+        # TODO: if net is already present in correct configuration: do nothing!
 
         parsed = output.split("handle ")
-        subprocess.call(nftCall + " replace rule " + table + " "
-                        + calculate_chain_name(all_privs, private_net, preflength)
-                        + " handle " + parsed[1] + " ip saddr " + str(private_net)
-                        + " snat to " + str(public_ip), shell=True)
+        command = nftCall + " replace rule " + table + " " \
+                        + calculate_chain_name(all_privs, private_net, preflength) \
+                        + " handle " + parsed[1] + " ip saddr " + str(private_net) \
+                        + " snat to " + str(public_ip)
+        print("Execute: " + command)
+        subprocess.call(command, shell=True)
     else:
         # private net not yet mapped
-        subprocess.call(nftCall + " add rule " + table + " "
-                        + calculate_chain_name(all_privs, private_net, preflength)
-                        + " ip saddr " + str(private_net)
-                        + " snat to " + str(public_ip), shell=True)
+        command = nftCall + " add rule " + table + " " \
+                        + calculate_chain_name(all_privs, private_net, preflength) \
+                        + " ip saddr " + str(private_net) \
+                        + " snat to " + str(public_ip)
+        print("Execute: " + command)
+        subprocess.call(command, shell=True)
 
 
 def createLevel(net, pref, level, preflength, translations):
@@ -111,11 +116,11 @@ def initializeNAT(private_net, translations, preflength=3):
     file.close()
 
     # drop previous content
-    #call(nftCall + " flush table " + table, shell=True)
+    subprocess.call(nftCall + " flush table " + table, shell=True)
     # eXecutor!
-    #call(nftCall + " -f " +  tmpFile, shell=True)
+    subprocess.call(nftCall + " -f " +  tmpFile, shell=True)
     # drop file
-    #call("/bin/rm " + tmpFile, shell=True)
+    subprocess.call("/bin/rm " + tmpFile, shell=True)
 
 
 def generateRateLimitMap():
