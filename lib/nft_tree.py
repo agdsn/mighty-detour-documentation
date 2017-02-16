@@ -140,9 +140,9 @@ def initialize(private_net, translations, throttles, preflength=3):
 
     # Throttling
     src += "add table " + table_throttle + "\n"
-    src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; } "
-    src += "add map " + table_throttle + " iptoverdict { type ipv4_addr: verdict ; flags interval;}"
-    src += "add rule ip " + table_throttle + " ratelimit ip saddr vmap @iptoverdict;"
+    src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; }\n"
+    src += "add map " + table_throttle + " iptoverdict { type ipv4_addr: verdict ; flags interval;}\n"
+    src += "add rule ip " + table_throttle + " ratelimit ip saddr vmap @iptoverdict;\n"
     src += "\n"
     for throttle in throttles:
         src += add_throttle(throttle)
@@ -155,12 +155,13 @@ def initialize(private_net, translations, throttles, preflength=3):
     file.close()
 
     # drop previous content
+    logging.debug("Drop previous configuration and apply new one")
     subprocess.call(nftCall + " delete table " + table, shell=True)
     subprocess.call(nftCall + " delete table " + table_throttle, shell=True)
     # eXecutor!
     subprocess.call(nftCall + " -f " +  tmpFile, shell=True)
     # drop file
-    subprocess.call("/bin/rm " + tmpFile, shell=True)
+    #subprocess.call("/bin/rm " + tmpFile, shell=True)
 
 
 def add_throttle(throttle):
