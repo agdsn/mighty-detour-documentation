@@ -7,12 +7,15 @@ table = "nat"
 tmpFile = "/tmp/nft.rules"
 maxLevel = 3
 
+
 def is_subnet_of(a, b):
-   a_len = a.prefixlen
-   b_len = b.prefixlen
-   return a_len >= b_len and a.supernet(a_len - b_len) == b
+    a_len = a.prefixlen
+    b_len = b.prefixlen
+    return a_len >= b_len and a.supernet(a_len - b_len) == b
+
 
 def calculate_chain_name(priv_net, subnet, preflength):
+    preflength = int(preflength)
     path = "postrouting-level-"
     subnets = priv_net.subnets(prefixlen_diff=12 - priv_net.prefixlen)
     current_net = IPv4Network('0.0.0.0/0')
@@ -35,9 +38,13 @@ def calculate_chain_name(priv_net, subnet, preflength):
             i += 1
     return path
 
+
 def updateSingleMapping(private_net, public_ip, all_privs, preflength):
-    output = subprocess.check_output(nftCall + " list table nat | grep " + str(private_net), shell=True)
-    if "handle" in output:
+    command = nftCall + " list table " + table + " | /bin/grep " + str(private_net)
+    print("Execute: " + command + "\n")
+    output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+    print("command output: " + str(output) + "\n")
+    if "handle" in str(output):
         # private net already mapped to something
 
         # TODO: delete existing conntrackd-state

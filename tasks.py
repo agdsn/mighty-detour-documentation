@@ -50,12 +50,11 @@ class Translation(Base):
 
 @app.task
 def update_mapping(net_passed):
-    net = IPv4Network(net_passed)
     session = Session()
 
-    trans = session.query(Translation).filter(Translation.translated_net == net_passed).one()
+    trans = session.query(Translation).filter(Translation.translated_net == str(net_passed)).one()
 
-    updateSingleMapping(private_net=trans.translated_net,
+    updateSingleMapping(private_net=IPv4Network(trans.translated_net),
                         public_ip=trans.public_ip,
                         all_privs=IPv4Network(config.get('CGN', 'Net')),
                         preflength=config.get('NFTTree', 'preflength'))
