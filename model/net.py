@@ -11,7 +11,7 @@ class Translation(Base):
     __tablename__ = 'translation'
 
     public_ip = Column(INET, nullable=False)
-    translated_net = Column(CIDR, nullable=False)
+    translated_net = Column(CIDR, nullable=False, primary_key=True)
     comment = Column(String)
 
     def __repr__(self):
