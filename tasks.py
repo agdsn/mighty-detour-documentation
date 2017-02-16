@@ -1,6 +1,7 @@
 from ipaddress import IPv4Address, IPv4Network
 
 from sqlalchemy import Column
+from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import CIDR
@@ -10,7 +11,7 @@ from sqlalchemy.orm import sessionmaker, deferred
 from celery import Celery
 import configparser
 
-from lib.nft_tree import initializeNAT,updateSingleMapping
+from lib.nft_tree import initialize,update_single_mapping
 
 config = configparser.ConfigParser()
 config.read('dsnat.ini')
@@ -47,6 +48,17 @@ class Translation(Base):
         self.public_ip, self.translated_net, self.comment)
 
 
+class Throttle(Base):
+    __tablename__ = 'throttle'
+
+    translated_net = Column(CIDR, nullable=False, primary_key=True)
+    comment = Column(String)
+    speed = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        return "<Throttle(translated_net='%s', speed='%s', comment='%s')>" % (
+            self.translated_net, self.speed, self.comment)
+
 
 @app.task
 def update_mapping(net_passed):
@@ -54,10 +66,10 @@ def update_mapping(net_passed):
 
     trans = session.query(Translation).filter(Translation.translated_net == str(net_passed)).one()
 
-    updateSingleMapping(private_net=IPv4Network(trans.translated_net),
-                        public_ip=trans.public_ip,
-                        all_privs=IPv4Network(config.get('CGN', 'Net')),
-                        preflength=config.get('NFTTree', 'preflength'))
+    update_single_mapping(private_net=IPv4Network(trans.translated_net),
+                          public_ip=trans.public_ip,
+                          all_privs=IPv4Network(config.get('CGN', 'Net')),
+                          preflength=config.get('NFTTree', 'preflength'))
 
 
 def initialize_nft():
@@ -66,8 +78,9 @@ def initialize_nft():
     d = {}
     for t in trans:
         d[IPv4Network(t.translated_net)] = IPv4Address(t.public_ip)
+    throttles = session.query(Translation).all()
 
-    initializeNAT(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d)
+    initialize(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d, throttles=throttles)
 
 
 def create_tables():

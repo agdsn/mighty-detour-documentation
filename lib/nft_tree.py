@@ -5,6 +5,7 @@ import logging
 nftCall = "/usr/local/sbin/nft"
 nftPreamble = "#!/usr/local/sbin/nft"
 table = "nat"
+table_throttle = "filter"
 tmpFile = "/tmp/nft.rules"
 maxLevel = 3
 
@@ -40,20 +41,20 @@ def calculate_chain_name(priv_net, subnet, preflength):
     return path
 
 
-def updateSingleMapping(private_net, public_ip, all_privs, preflength):
+def update_single_mapping(private_net, public_ip, all_privs, preflength):
     logging.info("Should update a single mapping (private: %s, public: %s)", private_net, public_ip)
     command = nftCall + " list table " + table + " -a | /bin/grep " + str(private_net)
     logging.debug("Execute: " + command)
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
-    if output.count() > 1:
+    if len(output) > 1:
         logging.warning("The private subnet %s is present multiple times!", private_net)
         for o in output:
             parsed_handle = o.split(" # handle ")
             parsed_destination = parsed_handle[0].split(" to ")
-            logging.warning("%s is already mapped to %s", private_net, parsed_destination[1])
-            
+            logging.warning("It is already mapped to %s", parsed_destination[1])
+
     logging.debug("Command output: " + output[0])
-    if "handle" in output:
+    if "handle" in output[0]:
         # private net already mapped to something
 
         # TODO: delete existing conntrackd-state
@@ -112,9 +113,12 @@ def createLeafs(net, prefix, preflength, translations):
     return src
 
 
-def initializeNAT(private_net, translations, preflength=3):
+def initialize(private_net, translations, throttles, preflength=3):
+    logging.debug("Begin generating initial nft configuration")
     src = nftPreamble + "\n"
     src += "\n"
+
+    # SNAT configuration
     src += "add table " + table + "\n"
     src += "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}\n"
     src += "add chain " + table + " postrouting { type nat hook postrouting priority 0 ;}\n"
@@ -132,32 +136,47 @@ def initializeNAT(private_net, translations, preflength=3):
         src += "add chain " + table + " postrouting-level-0\n"
         src += createLevel(private_net, "postrouting-level-0", 0, translations=translations) + "\n"
         src += "add rule " + table + " postrouting ip saddr " + str(private_net) + " goto postrouting-level-0\n"
+    src += "\n"
+
+    # Throttling
+    src += "add table " + table_throttle + "\n"
+    src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; } "
+    src += "add map " + table_throttle + " iptoverdict { type ipv4_addr: verdict ; flags interval;}"
+    src += "add rule ip " + table_throttle + " ratelimit ip saddr vmap @iptoverdict;"
+    src += "\n"
+    for throttle in throttles:
+        src += add_throttle(throttle)
+    logging.debug("End generation initial nft configuration")
 
     # write stuff to tmpFile
+    logging.debug("Write initial nft configuration to file: " + tmpFile)
     file = open(tmpFile, 'w')
     file.write(src)
     file.close()
 
     # drop previous content
     subprocess.call(nftCall + " delete table " + table, shell=True)
+    subprocess.call(nftCall + " delete table " + table_throttle, shell=True)
     # eXecutor!
     subprocess.call(nftCall + " -f " +  tmpFile, shell=True)
     # drop file
     subprocess.call("/bin/rm " + tmpFile, shell=True)
 
 
-def generateRateLimitMap():
-    print('#!/usr/sbin/nft')
-    src = "add chain " + table + " ratelimit { type filter hook forward priority 0; } "
-    src += "add map " + table + " iptoverdict { type ipv4_addr: verdict ; flags interval;}"
-    src += "add rule ip " + table + " ratelimit ip saddr vmap @iptoverdict;"
+def add_throttle(throttle):
+    logging.info("Add throttling rule for private subnet %s with speed %s kbytes/sec",
+                 throttle.translation_net, throttle.speed)
+    chain_name = str(IPv4Network(throttle.translation_net).network_address).replace(".","-")
+    src = "add chain " + table_throttle + " ratelimit-" + chain_name + "\n"
+    src += "add element " + table_throttle + " iptoverdict { " + str(throttle.translation_net) + " : goto " + " ratelimit-" + chain_name + " }\n"
+    src += "add rule " + table_throttle + " ratelimit-" + chain_name + " limit rate " + str(throttle.speed) + " kbytes/second accept\n"
 
-    net = IPv4Network("100.64.0.0/21", False)
-    subnets = net.subnets(prefixlen_diff=3)
-    for sub in subnets:
-        src += "add chain " + table + " ratelimit-" + str(sub)
-        src += "add element " + table + " iptoverdict { " + str(sub) + " : goto " + " ratelimit-" + str(sub) + " }"
-        src += "add rule " + table + " ratelimit-" + str(sub) + " limit rate 1 mbytes/second accept"
+    return src
+
+
+def update_throttle(throttle):
+    logging.critical("Not implemented yet!")
+
 
 def generateSingleDNAT():
     print('#!/usr/sbin/nft')
