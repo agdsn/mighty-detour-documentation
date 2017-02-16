@@ -6,6 +6,7 @@ nftCall = "/usr/local/sbin/nft"
 nftPreamble = "#!/usr/local/sbin/nft"
 table = "nat"
 table_throttle = "filter"
+map_throttle = "throttlitis"
 tmpFile = "/tmp/nft.rules"
 maxLevel = 3
 
@@ -141,8 +142,8 @@ def initialize(private_net, translations, throttles, preflength=3):
     # Throttling
     src += "add table " + table_throttle + "\n"
     src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; }\n"
-    src += "add map " + table_throttle + " iptoverdict { type ipv4_addr: verdict ; flags interval;}\n"
-    src += "add rule ip " + table_throttle + " ratelimit ip saddr vmap @iptoverdict;\n"
+    src += "add map " + table_throttle + " " + map_throttle + " { type ipv4_addr: verdict ; flags interval;}\n"
+    src += "add rule ip " + table_throttle + " ratelimit ip saddr vmap @" + map_throttle + ";\n"
     src += "\n"
     for throttle in throttles:
         src += add_throttle(throttle)
@@ -161,13 +162,14 @@ def initialize(private_net, translations, throttles, preflength=3):
     # eXecutor!
     subprocess.call(nftCall + " -f " +  tmpFile, shell=True)
     # drop file
-    #subprocess.call("/bin/rm " + tmpFile, shell=True)
+    if logging.getLogger().level > logging.DEBUG:
+        subprocess.call("/bin/rm " + tmpFile, shell=True)
 
 
 def drop_table_if_exists(tab):
     logging.debug("Drop table %s if it exists", tab)
     command = nftCall + " list tables"
-    output = subprocess.check_output("", shell=True).decode("utf-8")
+    output = subprocess.check_output(command, shell=True).decode("utf-8")
     if tab in output:
         command = nftCall + " delete table " + tab
         subprocess.call(command, shell=True)
@@ -176,19 +178,45 @@ def drop_table_if_exists(tab):
         logging.debug("Table %s has not been dropped since it does not exist" , tab)
 
 
+def throttle_chain(thro):
+    return "ratelimit-" + str(IPv4Network(thro.translated_net).network_address).replace(".","-")
+
+
 def add_throttle(throttle):
     logging.info("Add throttling rule for private subnet %s with speed %s kbytes/sec",
                  throttle.translated_net, throttle.speed)
-    chain_name = str(IPv4Network(throttle.translated_net).network_address).replace(".","-")
-    src = "add chain " + table_throttle + " ratelimit-" + chain_name + "\n"
-    src += "add element " + table_throttle + " iptoverdict { " + str(throttle.translated_net) + " : goto " + " ratelimit-" + chain_name + " }\n"
-    src += "add rule " + table_throttle + " ratelimit-" + chain_name + " limit rate " + str(throttle.speed) + " kbytes/second accept\n"
+    src = "add chain " + table_throttle + " " + throttle_chain(throttle) + "\n"
+    src += "add element " + table_throttle + " " + map_throttle + " { " + str(throttle.translated_net) + " : goto " + " " + throttle_chain(throttle) + " }\n"
+    src += "add rule " + table_throttle + " " + throttle_chain(throttle) + " limit rate " + str(throttle.speed) + " kbytes/second accept\n"
 
     return src
 
 
 def update_throttle(throttle):
     logging.critical("Not implemented yet!")
+
+
+def drop_throttle(throttle):
+    logging.info("Drop throttling for private subnet %s with speed %s kbytes/sec",
+                 throttle.translated_net, throttle.speed)
+
+    command = nftCall + " list map " + table_throttle + " " + map_throttle + " -a | /bin/grep " + str(throttle.translated_net)
+    output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
+    if len(output) > 1:
+        logging.warning("The throttling subnet %s is present multiple times!", throttle.translated_net)
+        for o in output:
+            parsed_handle = o.split(" # handle ")
+            parsed_destination = parsed_handle[0].split(" to ")
+            logging.warning("It is already mapped to %s", parsed_destination[1])
+
+    logging.debug("Command output: " + output[0])
+    if "handle" in output[0]:
+
+
+    command = nftCall + " flush chain " + throttle_chain(throttle)
+    subprocess.call(command, shell=True)
+    command = nftCall + " delete chain " + throttle_chain(throttle)
+    subprocess.call(command, shell=True)
 
 
 def generateSingleDNAT():

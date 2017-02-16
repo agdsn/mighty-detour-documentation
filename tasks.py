@@ -66,6 +66,8 @@ def update_mapping(net_passed):
 
     trans = session.query(Translation).filter(Translation.translated_net == str(net_passed)).one()
 
+    # TODO: if nothing is found, the mapping should be removed
+
     update_single_mapping(private_net=IPv4Network(trans.translated_net),
                           public_ip=trans.public_ip,
                           all_privs=IPv4Network(config.get('CGN', 'Net')),
