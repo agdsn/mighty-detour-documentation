@@ -12,10 +12,11 @@ def chain_throttle(translated_net):
 
 
 def add_throttle(throttle):
+    chain_name = chain_throttle(throttle.translated_net)
     logging.info("Add throttling %s", throttle)
-    src = "add chain " + table_throttle + " " + chain_throttle(throttle) + "\n"
-    src += "add element " + table_throttle + " " + map_throttle + " { " + str(throttle.translated_net) + " : goto " + " " + chain_throttle(throttle) + " }\n"
-    src += "add rule " + table_throttle + " " + chain_throttle(throttle) + " limit rate " + str(throttle.speed) + " kbytes/second accept\n"
+    src = "add chain " + table_throttle + " " + chain_name + "\n"
+    src += "add element " + table_throttle + " " + map_throttle + " { " + str(throttle.translated_net) + " : goto " + " " + chain_name + " }\n"
+    src += "add rule " + table_throttle + " " + chain_name + " limit rate " + str(throttle.speed) + " kbytes/second accept\n"
 
     return src
 
