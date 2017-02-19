@@ -40,7 +40,7 @@ def createLeafs(net, prefix, preflength, translations):
 
 
 
-def initialize(private_net, translations, throttles, forwardings, preflength=3):
+def initialize(private_net, translations, throttles, forwardings, blacklist, whitelist, preflength=3):
     logging.debug("Begin generating initial nft configuration")
     src = nftPreamble + "\n"
     src += "\n"
@@ -66,9 +66,21 @@ def initialize(private_net, translations, throttles, forwardings, preflength=3):
 
     # Throttling
     src += "add table " + table_throttle + "\n"
-    src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; }\n"
     src += "add map " + table_throttle + " " + map_throttle + " { type ipv4_addr: verdict ; flags interval;}\n"
-    src += "add rule ip " + table_throttle + " ratelimit ip saddr vmap @" + map_throttle + ";\n"
+    for throttle in throttles:
+        src += add_throttle(throttle)
+    # Throttle decision chain
+    src += "add chain " + table_throttle + " ratelimit_map"
+    src += "add rule " + table_throttle + " ratelimit_map ip saddr vmap @" + map_throttle + ";\n"
+    # Exception chain
+    src += "add chain " + table_throttle + " ratelimit_exceptions\n"
+    for b in blacklist:
+        src += "add rule " + table_throttle + " ratelimit_exceptions ip saddr " + str(b) + " goto ratelimit_map\n"
+    src += "add rule " + table_throttle + " ratelimit_exceptions accept\n"
+    # Throttle entry chain
+    src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; }\n"
+    for w in whitelist:
+        src += "add rule " + table_throttle + " ratelimit ip saddr " + str(w) + " goto ratelimit_exceptions\n"
     src += "\n"
     for throttle in throttles:
         src += add_throttle(throttle)

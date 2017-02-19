@@ -97,7 +97,20 @@ def initialize_nft():
     throttles = session.query(Throttle).all()
     forwardings = session.query(Forwarding).all()
 
-    initialize(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d, throttles=throttles, forwardings=forwardings)
+    whitelist = []
+    i = 0
+    while config.has_option('ThrottleExceptions','WhiteList' + i):
+        whitelist.append(config.get('ThrottleExceptions', 'WhiteList' + str(i)))
+        i += 1
+
+    blacklist = []
+    i = 0
+    while config.has_option('ThrottleExceptions','BlackList' + i):
+        whitelist.append(config.get('ThrottleExceptions', 'BlackList' + str(i)))
+        i += 1
+
+    initialize(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')),
+               translations=d, throttles=throttles, blacklist=blacklist, whitelist=whitelist, forwardings=forwardings)
 
 
 def create_tables():
