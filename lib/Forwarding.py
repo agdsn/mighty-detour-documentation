@@ -11,27 +11,28 @@ def chain_forwarding(public_ip):
 
 def add_forwarding(forward):
     logging.info("Create forwarding %s", forward)
+    chain_name = chain_forwarding(forward.public_ip)
     forward_string = forward.protocol + " dport " + forward.source_port + " ip saddr " + forward.public_ip \
                      + " dnat to " + forward.private_ip + ":" + forward.destination_port
-    jump_string = "ip saddr " + forward.public_ip + " goto " + chain_forwarding(forward.public_ip)
-    if not chain_exists(chain_name=chain_forwarding(forward.public_ip), table=table):
-        add_chain(chain=chain_forwarding(forward.public_ip), table=table)
+    jump_string = "ip saddr " + forward.public_ip + " goto " + chain_name
+    if not chain_exists(chain_name=chain_name, table=table):
+        add_chain(chain=chain_name, table=table)
     # Add rule to jump into the private chain
     if not rule_exists(table=table, chain="prerouting", value=jump_string):
         add_rule(table=table, chain="prerouting", rule=jump_string)
     # Add rule inside the private chain
-
-    # TODO: verify ob similar rule exists (same public_ip and public_port)
-
-    if rule_exists(table=table, chain=chain_forwarding(forward.public_ip), value=forward_string):
-        logging.debug("A Forwarding for %s:%s (%s) to %s:%s already exists, nothing to do",
-             forward.public_ip, forward.source_port,
-             forward.protocol, forward.private_ip, forward.destination_port)
+    if rule_exists(table=table, chain=chain_name, value=forward_string):
+        logging.debug("Forwarding %s already existed", forward)
     else:
-        add_rule(table=table, chain=chain_forwarding(forward.public_ip), rule=forward_string)
-        logging.info("A forwarding for %s:%s (%s) to %s:%s has been added",
-             forward.public_ip, forward.source_port,
-             forward.protocol, forward.private_ip, forward.destination_port)
+        # Verify if an similar rule already exists (same public_ip, public_port and protocol)
+        generic_string = forward.protocol + " dport " + forward.source_port + " ip saddr " + forward.public_ip
+        handle = rule_exists(table=table, chain=chain_name, value=generic_string)
+        if not handle:
+            add_rule(table=table, chain=chain_name, rule=forward_string)
+            logging.info("Added forwarding %s", forward)
+        else:
+            replace_rule(handle=handle, rule=forward_string, chain=chain_name, table=table)
+            logging.info("Updated forwarding %s with previous rule handle %s", forward, handle)
 
 
 def drop_forwarding(forward):
