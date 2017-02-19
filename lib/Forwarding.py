@@ -12,9 +12,9 @@ def chain_forwarding(public_ip):
 def add_forwarding(forward):
     logging.info("Create forwarding %s", forward)
     chain_name = chain_forwarding(forward.public_ip)
-    forward_string = forward.protocol + " dport " + forward.source_port + " ip saddr " + forward.public_ip \
-                     + " dnat to " + forward.private_ip + ":" + forward.destination_port
-    jump_string = "ip saddr " + forward.public_ip + " goto " + chain_name
+    forward_string = str(forward.protocol) + " dport " + str(forward.source_port) + " ip saddr " + str(forward.public_ip) \
+                     + " dnat to " + str(forward.private_ip) + ":" + str(forward.destination_port)
+    jump_string = "ip saddr " + str(forward.public_ip) + " goto " + chain_name
     if not chain_exists(chain_name=chain_name, table=table):
         add_chain(chain=chain_name, table=table)
     # Add rule to jump into the private chain
@@ -25,7 +25,7 @@ def add_forwarding(forward):
         logging.debug("Forwarding %s already existed", forward)
     else:
         # Verify if an similar rule already exists (same public_ip, public_port and protocol)
-        generic_string = forward.protocol + " dport " + forward.source_port + " ip saddr " + forward.public_ip
+        generic_string = forward.protocol + " dport " + str(forward.source_port) + " ip saddr " + str(forward.public_ip)
         handle = rule_exists(table=table, chain=chain_name, value=generic_string)
         if not handle:
             add_rule(table=table, chain=chain_name, rule=forward_string)
