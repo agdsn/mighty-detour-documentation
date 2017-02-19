@@ -70,7 +70,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     for throttle in throttles:
         src += add_throttle(throttle)
     # Throttle decision chain
-    src += "add chain " + table_throttle + " ratelimit_map"
+    src += "add chain " + table_throttle + " ratelimit_map\n"
     src += "add rule " + table_throttle + " ratelimit_map ip saddr vmap @" + map_throttle + ";\n"
     # Exception chain
     src += "add chain " + table_throttle + " ratelimit_exceptions\n"
@@ -81,9 +81,8 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; }\n"
     for w in whitelist:
         src += "add rule " + table_throttle + " ratelimit ip saddr " + str(w) + " goto ratelimit_exceptions\n"
+    src += "add rule " + table_throttle + " ratelimit goto ratelimit_map\n"
     src += "\n"
-    for throttle in throttles:
-        src += add_throttle(throttle)
 
     # DNAT aka Portforwardings
     src += "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}\n"

@@ -99,14 +99,14 @@ def initialize_nft():
 
     whitelist = []
     i = 0
-    while config.has_option('ThrottleExceptions','WhiteList' + i):
+    while config.has_option('ThrottleExceptions','WhiteList' + str(i)):
         whitelist.append(config.get('ThrottleExceptions', 'WhiteList' + str(i)))
         i += 1
 
     blacklist = []
     i = 0
-    while config.has_option('ThrottleExceptions','BlackList' + i):
-        whitelist.append(config.get('ThrottleExceptions', 'BlackList' + str(i)))
+    while config.has_option('ThrottleExceptions','BlackList' + str(i)):
+        blacklist.append(config.get('ThrottleExceptions', 'BlackList' + str(i)))
         i += 1
 
     initialize(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')),
