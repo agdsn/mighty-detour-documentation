@@ -1,0 +1,5 @@
+- replace ini with yaml configuration file
+- include separate config variables into the main config file
+- maybe reimplement throttle updates due to map limitations
+- support multiple databases, maybe for different private subnets
+- add dbhost-parameter for updates
