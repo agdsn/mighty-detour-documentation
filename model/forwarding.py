@@ -15,8 +15,8 @@ class Forwarding(Base):
     private_ip = Column(INET, nullable=False)
 
     protocol = Column(String(10))
-    source_port = Column(Integer(5))
-    destination_port = Column(Integer(5))
+    source_port = Column(Integer)
+    destination_port = Column(Integer)
     comment = Column(String)
 
     def __repr__(self):

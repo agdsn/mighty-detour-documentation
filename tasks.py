@@ -9,9 +9,9 @@ from lib.Forwarding import drop_all_forwardings, add_forwarding
 from lib.Initialization import initialize
 from lib.Throttle import drop_throttle, add_throttle
 from lib.Translation import add_translation, drop_translation
-from model import Forwarding
-from model import Throttle
-from model import Translation
+from model.forwarding import Forwarding
+from model.throttle import Throttle
+from model.translation import Translation
 from model.base import Base
 
 config = configparser.ConfigParser()
