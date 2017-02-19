@@ -1,17 +1,15 @@
 from ipaddress import IPv4Address, IPv4Network
-
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import String
+import logging
 from sqlalchemy import create_engine
-from sqlalchemy.dialects.postgresql import CIDR
-from sqlalchemy.dialects.postgresql import INET
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, deferred
+from sqlalchemy.orm import sessionmaker
 from celery import Celery
 import configparser
-
-from lib.nft_tree import initialize,update_single_mapping
+from lib.Initialization import initialize
+from lib.Translation import add_translation
+from model import Forwarding
+from model import Throttle
+from model import Translation
+from model.base import Base
 
 config = configparser.ConfigParser()
 config.read('dsnat.ini')
@@ -33,33 +31,6 @@ while config.has_section("Database" + str(i)):
 
 Session = sessionmaker(bind=engine[0])
 
-Base = declarative_base()
-
-
-class Translation(Base):
-    __tablename__ = 'translation'
-
-    public_ip = Column(INET, nullable=False)
-    translated_net = Column(CIDR, nullable=False, primary_key=True)
-    comment = deferred(Column(String))
-
-    def __repr__(self):
-        return "<Translation(public_ip='%s', translated_net='%s', comment='%s')>" % (
-        self.public_ip, self.translated_net, self.comment)
-
-
-class Throttle(Base):
-    __tablename__ = 'throttle'
-
-    translated_net = Column(CIDR, nullable=False, primary_key=True)
-    comment = Column(String)
-    speed = Column(Integer, nullable=False)
-
-    def __repr__(self):
-        return "<Throttle(translated_net='%s', speed='%s', comment='%s')>" % (
-            self.translated_net, self.speed, self.comment)
-
-
 @app.task
 def update_mapping(net_passed):
     session = Session()
@@ -68,10 +39,19 @@ def update_mapping(net_passed):
 
     # TODO: if nothing is found, the mapping should be removed
 
-    update_single_mapping(private_net=IPv4Network(trans.translated_net),
-                          public_ip=trans.public_ip,
+    add_translation(translation=trans,
                           all_privs=IPv4Network(config.get('CGN', 'Net')),
                           preflength=config.get('NFTTree', 'preflength'))
+
+
+@app.task
+def update_throttle(net_passed):
+    logging.critical("Not implemented yet!")
+
+
+@app.task
+def update_forwarding(forward):
+    logging.critical("Not implemented yet!")
 
 
 def initialize_nft():
@@ -81,8 +61,9 @@ def initialize_nft():
     for t in trans:
         d[IPv4Network(t.translated_net)] = IPv4Address(t.public_ip)
     throttles = session.query(Throttle).all()
+    forwardings = session.query(Forwarding).all()
 
-    initialize(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d, throttles=throttles)
+    initialize(private_net=IPv4Network(config.get('CGN', 'Net')), preflength=int(config.get('NFTTree', 'preflength')), translations=d, throttles=throttles, forwardings=forwardings)
 
 
 def create_tables():
