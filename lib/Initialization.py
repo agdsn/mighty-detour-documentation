@@ -68,7 +68,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "add table " + table_throttle + "\n"
     src += "add map " + table_throttle + " " + map_throttle + " { type ipv4_addr: verdict ; flags interval;}\n"
     for throttle in throttles:
-        src += add_throttle(throttle)
+        src += generate_throttle(throttle)
     # Throttle decision chain
     src += "add chain " + table_throttle + " ratelimit_map\n"
     src += "add rule " + table_throttle + " ratelimit_map ip saddr vmap @" + map_throttle + ";\n"
@@ -87,7 +87,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     # DNAT aka Portforwardings
     src += "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}\n"
     for forward in forwardings:
-        src += add_forwarding(forward)
+        src += generate_forwarding(forward)
     logging.debug("End generation initial nft configuration")
 
     # write stuff to tmpFile

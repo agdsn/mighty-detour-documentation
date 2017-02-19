@@ -11,7 +11,7 @@ def chain_throttle(translated_net):
     return "ratelimit-" + str(IPv4Network(translated_net).network_address).replace(".","-")
 
 
-def add_throttle(throttle):
+def generate_throttle(throttle):
     chain_name = chain_throttle(throttle.translated_net)
     logging.info("Add throttling %s", throttle)
     src = "add chain " + table_throttle + " " + chain_name + "\n"
