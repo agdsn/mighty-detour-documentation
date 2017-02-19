@@ -9,10 +9,16 @@ def chain_forwarding(public_ip):
     return "forwarding-" + str(IPv4Network(str(public_ip)).network_address).replace(".","-")
 
 
-def generate_forwarding(forward):
-    return table + " " + chain_forwarding(forward.public_ip) + " " + str(forward.protocol) + " dport "\
-           + str(forward.source_port) + " ip saddr " + str(forward.public_ip) \
-           + " dnat to " + str(forward.private_ip) + ":" + str(forward.destination_port)
+def generate_forwardings(forwards):
+    src = ""
+    chains = []
+    for forward in forwards:
+        if forward.public_ip not in chains:
+            src += "add chain " + table + " " + chain_forwarding(forward.public_ip) + "\n"
+            chains.append(forward.public_ip)
+        src += "add rule " + table + " " + chain_forwarding(forward.public_ip) + " " + str(forward.protocol) + " "
+        src += "dport  " + str(forward.source_port) + " ip saddr " + str(forward.public_ip) + " "
+        src += "dnat to " + str(forward.private_ip) + ":" + str(forward.destination_port) + "\n"
 
 
 def add_forwarding(forward):

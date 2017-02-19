@@ -86,8 +86,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
 
     # DNAT aka Portforwardings
     src += "add chain " + table + " prerouting { type nat hook prerouting priority 0 ;}\n"
-    for forward in forwardings:
-        src += generate_forwarding(forward)
+    src += generate_forwardings(forwardings)
     logging.debug("End generation initial nft configuration")
 
     # write stuff to tmpFile
