@@ -51,3 +51,18 @@ def add_translation(translation, all_privs, preflength):
             replace_rule(handle=handle, rule=translation_string, chain=chain_name, table=table)
     else:
         logging.info("The translation %s is already present", translation)
+
+
+def drop_translation(translated_net, all_privs, preflength):
+    logging.debug("Deleting translation for private net %s", translated_net)
+    chain_name = chain_translation(all_privs=all_privs, priv_net=translated_net, preflength=preflength)
+    generic_string = "ip saddr " + str(translated_net)
+    handle = rule_exists(value=generic_string, chain=chain_name, table=table)
+    if not handle:
+        logging.debug("There is no translation present for private net %s", translated_net)
+    else:
+
+        # TODO: drop conntrackd state
+
+        drop_rule(handle=handle, chain=chain_name, table=table)
+

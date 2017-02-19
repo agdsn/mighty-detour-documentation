@@ -4,8 +4,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from celery import Celery
 import configparser
+
+from lib.Forwarding import drop_all_forwardings, add_forwarding
 from lib.Initialization import initialize
-from lib.Translation import add_translation
+from lib.Throttle import drop_throttle, add_throttle
+from lib.Translation import add_translation, drop_translation
 from model import Forwarding
 from model import Throttle
 from model import Translation
@@ -32,28 +35,59 @@ while config.has_section("Database" + str(i)):
 Session = sessionmaker(bind=engine[0])
 
 @app.task
-def update_mapping(net_passed):
+def update_translation(net_passed):
     session = Session()
 
-    trans = session.query(Translation).filter(Translation.translated_net == str(net_passed)).one()
+    res = session.query(Translation).filter(Translation.translated_net == str(net_passed)).all()
 
-    # TODO: if nothing is found, the mapping should be removed
-
-    add_translation(translation=trans,
+    if res.count() == 0:
+        logging.info("Removing translation for private net %s", net_passed)
+        drop_translation(translated_net=net_passed,
+                         all_privs=IPv4Network(config.get('CGN', 'Net')),
+                         preflength=config.get('NFTTree', 'preflength'))
+    elif res.count() == 1:
+        logging.info("Adding translation for private net %s", res.first())
+        add_translation(translation=res.first(),
                           all_privs=IPv4Network(config.get('CGN', 'Net')),
                           preflength=config.get('NFTTree', 'preflength'))
+    else:
+        logging.critical("Multiple translations for the same private net found, doing nothing")
+        for t in res:
+            logging.critical("Found translation %s", t)
 
 
 @app.task
 def update_throttle(net_passed):
-    logging.critical("Not implemented yet!")
+    session = Session()
+
+    res = session.query(Throttle).filter(Throttle.translated_net == str(net_passed)).all()
+
+    if res.count() == 0:
+        logging.info("Removing throttle for private net %s", net_passed)
+        drop_throttle(translated_net=net_passed)
+    elif res.count() == 1:
+        logging.info("Adding throttle for private net %s", res.first())
+        add_throttle(translation=res.first())
+    else:
+        logging.critical("Multiple throttles for the same private net found, doing nothing")
+        for t in res:
+            logging.critical("Found throttle: %s", t)
 
 
 @app.task
-def update_forwarding(forward):
-    logging.critical("Not implemented yet!")
+def update_forwarding(public_ip):
+    session = Session()
+
+    res = session.query(Forwarding).filter(Forwarding.public_ip == str(public_ip)).all()
+
+    drop_all_forwardings(translated_net=public_ip)
+
+    for r in res:
+        logging.info("Adding forwarding %s", r)
+        add_forwarding(translation=r)
 
 
+@app.task
 def initialize_nft():
     session = Session()
     trans = session.query(Translation).all()

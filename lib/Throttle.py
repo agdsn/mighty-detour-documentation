@@ -7,8 +7,8 @@ table_throttle = "filter"
 nftCall = "/usr/local/sbin/nft"
 
 
-def chain_throttle(thro):
-    return "ratelimit-" + str(IPv4Network(thro.translated_net).network_address).replace(".","-")
+def chain_throttle(translated_net):
+    return "ratelimit-" + str(IPv4Network(translated_net).network_address).replace(".","-")
 
 
 def add_throttle(throttle):
@@ -24,13 +24,13 @@ def update_throttle(throttle):
     logging.critical("Not implemented yet!")
 
 
-def drop_throttle(throttle):
-    logging.info("Drop throttling %s", throttle)
+def drop_throttle(translated_net):
+    logging.info("Drop throttling for private net %s", translated_net)
 
-    command = nftCall + " list map " + table_throttle + " " + map_throttle + " -a | /bin/grep " + str(throttle.translated_net)
+    command = nftCall + " list map " + table_throttle + " " + map_throttle + " -a | /bin/grep " + str(translated_net)
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
     if len(output) > 1:
-        logging.warning("The throttling subnet %s is present multiple times!", throttle.translated_net)
+        logging.warning("The throttling subnet %s is present multiple times!", translated_net)
         for o in output:
             parsed_handle = o.split(" # handle ")
             parsed_destination = parsed_handle[0].split(" to ")
@@ -41,7 +41,7 @@ def drop_throttle(throttle):
 
     # TODO: if possible (ask netfilter-dev!), implement simgle entry drop
 
-    command = nftCall + " flush chain " + chain_throttle(throttle)
+    command = nftCall + " flush chain " + chain_throttle(translated_net)
     subprocess.call(command, shell=True)
-    command = nftCall + " delete chain " + chain_throttle(throttle)
+    command = nftCall + " delete chain " + chain_throttle(translated_net)
     subprocess.call(command, shell=True)
