@@ -16,9 +16,11 @@ def generate_forwardings(forwards):
         if forward.public_ip not in chains:
             src += "add chain " + table + " " + chain_forwarding(forward.public_ip) + "\n"
             chains.append(forward.public_ip)
+            src += "add rule " + table + " prerouting ip saddr " + str(forward.public_ip) + " goto chain_forwarding(forward.public_ip)\n"
         src += "add rule " + table + " " + chain_forwarding(forward.public_ip) + " " + str(forward.protocol) + " "
         src += "dport  " + str(forward.source_port) + " ip saddr " + str(forward.public_ip) + " "
         src += "dnat to " + str(forward.private_ip) + ":" + str(forward.destination_port) + "\n"
+    return src
 
 
 def add_forwarding(forward):
