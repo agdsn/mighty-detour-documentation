@@ -9,9 +9,9 @@ def define_engine(name):
 
     database = False
     for db in cfg()['databases']:
-        logging.debug("search %s, fetch %s", name, db['name'])
         if db['name'] == name:
             database = db
+            logging.debug("Found database %s in config", db['name'])
             break
 
     if not database:

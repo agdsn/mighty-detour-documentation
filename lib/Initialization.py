@@ -59,23 +59,23 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "\n"
 
     # Throttling
-    src += "add table " + table_throttle + "\n"
-    src += "add map " + table_throttle + " " + map_throttle + " { type ipv4_addr: verdict ; flags interval;}\n"
+    src += "add table " + cfg()['netfilter']['throttle']['table'] + "\n"
+    src += "add map " + cfg()['netfilter']['throttle']['table'] + " " + cfg()['netfilter']['throttle']['map'] + " { type ipv4_addr: verdict ; flags interval;}\n"
     for throttle in throttles:
         src += generate_throttle(throttle)
     # Throttle decision chain
-    src += "add chain " + table_throttle + " ratelimit_map\n"
-    src += "add rule " + table_throttle + " ratelimit_map ip saddr vmap @" + map_throttle + ";\n"
+    src += "add chain " + cfg()['netfilter']['throttle']['table'] + " ratelimit_map\n"
+    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_map ip saddr vmap @" + cfg()['netfilter']['throttle']['map'] + ";\n"
     # Exception chain
-    src += "add chain " + table_throttle + " ratelimit_exceptions\n"
+    src += "add chain " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions\n"
     for b in blacklist:
-        src += "add rule " + table_throttle + " ratelimit_exceptions ip saddr " + str(b) + " goto ratelimit_map\n"
-    src += "add rule " + table_throttle + " ratelimit_exceptions accept\n"
+        src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions ip saddr " + str(b) + " goto ratelimit_map\n"
+    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions accept\n"
     # Throttle entry chain
-    src += "add chain " + table_throttle + " ratelimit { type filter hook forward priority 0; }\n"
+    src += "add chain " + cfg()['netfilter']['throttle']['table'] + " ratelimit { type filter hook forward priority 0; }\n"
     for w in whitelist:
-        src += "add rule " + table_throttle + " ratelimit ip saddr " + str(w) + " goto ratelimit_exceptions\n"
-    src += "add rule " + table_throttle + " ratelimit goto ratelimit_map\n"
+        src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit ip saddr " + str(w) + " goto ratelimit_exceptions\n"
+    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit goto ratelimit_map\n"
     src += "\n"
 
     # DNAT aka Portforwardings
@@ -92,9 +92,9 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     # drop previous content
     logging.debug("Drop previous configuration and apply new one")
     drop_table_if_exists(cfg()['netfilter']['translation']['table'])
-    drop_table_if_exists(table_throttle)
+    drop_table_if_exists(cfg()['netfilter']['throttle']['table'])
     # eXecutor!
-    subprocess.call(nftCall + " -f " +  cfg()['netfilter']['nft']['tmpfile'], shell=True)
+    subprocess.call(cfg()['netfilter']['nft']['call'] + " -f " +  cfg()['netfilter']['nft']['tmpfile'], shell=True)
     # drop file
     if logging.getLogger().level > logging.DEBUG:
         subprocess.call("/bin/rm " + cfg()['netfilter']['nft']['tmpfile'], shell=True)
