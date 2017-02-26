@@ -3,8 +3,7 @@ import logging
 from celery import Celery
 
 from helper.config import cfg
-from helper.database import connect_db
-from helper.database import create_engine
+from helper.database import connect_db, define_engine
 from lib.Forwarding import drop_all_forwardings, add_forwarding
 from lib.Initialization import initialize
 from lib.Throttle import drop_throttle, generate_throttle
@@ -69,7 +68,7 @@ def update_forwarding(public_ip, database):
 
 @app.task
 def initialize_nft(database):
-    session = connect_db(name=database)
+    session = connect_db(database)
     trans = session.query(Translation).all()
 
     d = {}
@@ -78,9 +77,14 @@ def initialize_nft(database):
     throttles = session.query(Throttle).all()
     forwardings = session.query(Forwarding).all()
 
-    initialize(private_net=IPv4Network(cfg()['cgn']['net']), preflength=int(cfg()['netfilter']['preflength']),
-               translations=d, throttles=throttles, blacklist=cfg()['blacklist'], whitelist=cfg()['whitelist'], forwardings=forwardings)
+    initialize(private_net=IPv4Network(cfg()['cgn']['net']),
+               preflength=int(cfg()['netfilter']['preflength']),
+               translations=d,
+               throttles=throttles,
+               blacklist=cfg()['blacklist'],
+               whitelist=cfg()['whitelist'],
+               forwardings=forwardings)
 
 
 def create_tables(database):
-    Base.metadata.create_all(create_engine(database))
+    Base.metadata.create_all(define_engine(database))

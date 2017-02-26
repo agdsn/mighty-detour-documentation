@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from helper.config import cfg
 
 
-def create_engine(name):
+def define_engine(name):
 
     database = False
     for db in cfg()['databases']:
@@ -28,7 +28,7 @@ def create_engine(name):
 
 
 def connect_db(name):
-    engine = create_engine(name=name)
+    engine = define_engine(name)
     Session = sessionmaker(bind=engine)
 
     return Session()
