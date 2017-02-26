@@ -6,7 +6,7 @@ from helper.config import cfg
 from helper.database import connect_db, define_engine
 from lib.Forwarding import drop_all_forwardings, add_forwarding
 from lib.Initialization import initialize
-from lib.Throttle import drop_throttle, generate_throttle
+from lib.Throttle import drop_throttle, add_throttle
 from lib.Translation import add_translation, drop_translation
 from model.forwarding import Forwarding
 from model.throttle import Throttle
@@ -34,7 +34,7 @@ def update_translation(net_passed, database):
     else:
         logging.critical("Multiple translations for the same private net found, doing nothing")
         for t in res:
-            logging.critical("Found translation %s", t)
+            logging.error("Found translation %s", t)
 
 
 @app.task
@@ -47,11 +47,11 @@ def update_throttle(net_passed, database):
         drop_throttle(translated_net=net_passed)
     elif res.count() == 1:
         logging.info("Adding throttle for private net %s", res.first())
-        generate_throttle(translation=res.first())
+        add_throttle(translation=res.first())
     else:
         logging.critical("Multiple throttles for the same private net found, doing nothing")
         for t in res:
-            logging.critical("Found throttle: %s", t)
+            logging.error("Found throttle: %s", t)
 
 
 @app.task
