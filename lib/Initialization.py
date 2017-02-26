@@ -3,9 +3,9 @@ from lib.Forwarding import *
 from nft.tables import *
 
 
-def createLevel(net, pref, level, preflength, translations):
+def create_level(net, pref, level, preflength, translations):
     if level >= cfg()['netfilter']['preflength']:
-        return createLeafs(net, pref, preflength=preflength, translations=translations)
+        return create_leafs(net, pref, preflength=preflength, translations=translations)
 
     subnets = net.subnets(prefixlen_diff=preflength)
 
@@ -16,13 +16,13 @@ def createLevel(net, pref, level, preflength, translations):
         newPref = pref + "-" + str(i)
         src += "add chain " + cfg()['netfilter']['translation']['table'] + " " + newPref + "\n"
         src += "add rule " + cfg()['netfilter']['translation']['table'] + " " + pref + " ip saddr " + str(sub) + " goto " + newPref + "\n"
-        src += createLevel(sub, newPref, level + 1, translations=translations, preflength=preflength) + "\n"
+        src += create_level(sub, newPref, level + 1, translations=translations, preflength=preflength) + "\n"
         i += 1;
 
     return src
 
 
-def createLeafs(net, prefix, preflength, translations):
+def create_leafs(net, prefix, preflength, translations):
     subnets = net.subnets(prefixlen_diff=preflength)
     src = ""
     for sub in subnets:
@@ -50,11 +50,11 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
             src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-" + str(i) + "\n"
             src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr "\
                    + str(sub) + " goto postrouting-level-" + str(i) + "\n"
-            src += createLevel(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
+            src += create_level(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
             i += 1
     else:
         src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-0\n"
-        src += createLevel(private_net, "postrouting-level-0", 0, translations=translations) + "\n"
+        src += create_level(private_net, "postrouting-level-0", 0, translations=translations) + "\n"
         src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr " + str(private_net) + " goto postrouting-level-0\n"
     src += "\n"
 
