@@ -3,6 +3,7 @@ from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.orm import deferred
+
 from model.base import Base
 
 

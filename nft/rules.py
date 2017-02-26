@@ -1,24 +1,23 @@
 import subprocess
 import logging
-from helper.config import cfg
 
-nftCall = cfg()['netfilter']['nft']['call']
+from helper.config import cfg
 
 
 def add_rule(rule, chain, table):
-    command = nftCall + " add rule " + table + " " + chain + " " + rule
+    command = cfg()['netfilter']['nft']['call'] + " add rule " + table + " " + chain + " " + rule
     subprocess.call(command, shell=True)
     logging.debug("The rule %s has been added to table %s chain %s", rule, table, chain)
 
 
 def replace_rule(handle, rule, chain, table):
-    command = nftCall + " replace rule " + table + " " + chain + " handle " + handle + " " + rule
+    command = cfg()['netfilter']['nft']['call'] + " replace rule " + table + " " + chain + " handle " + handle + " " + rule
     subprocess.call(command, shell=True)
     logging.debug("The rule with handle %s has been replaced with %s at table %s chain %s", handle, rule, table, chain)
 
 
 def drop_rule(handle, chain, table):
-    command = nftCall + " delete rule " + table + " " + chain + " handle " + str(handle)
+    command = cfg()['netfilter']['nft']['call'] + " delete rule " + table + " " + chain + " handle " + str(handle)
     subprocess.call(command, shell=True)
     logging.debug("The rule with handle %s has been added to table %s chain %s", handle, table, chain)
 
@@ -29,9 +28,9 @@ def rule_exists(value, table, chain=None):
     logging.debug("Check if a rule in table %s chain %s contains %s", table, chain, value)
     if chain is None:
         logging.debug("No chain specified, searching in whole nft table %s", table)
-        command = nftCall + " list table " + table + " -a -nnn | /bin/grep " + str(value)
+        command = cfg()['netfilter']['nft']['call'] + " list table " + table + " -a -nnn | /bin/grep " + str(value)
     else:
-        command = nftCall + " list chain " + table + " " + chain + " -a -nnn | /bin/grep " + str(value)
+        command = cfg()['netfilter']['nft']['call'] + " list chain " + table + " " + chain + " -a -nnn | /bin/grep " + str(value)
     logging.debug("Execute: " + command)
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
     if len(output) > 1:

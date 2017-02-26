@@ -1,16 +1,15 @@
 import subprocess
 import logging
-from helper.config import cfg
 
-nftCall = cfg()['netfilter']['nft']['call']
+from helper.config import cfg
 
 
 def drop_table_if_exists(tab):
     logging.debug("Drop table %s if it exists", tab)
-    command = nftCall + " list tables"
+    command = cfg()['netfilter']['nft']['call'] + " list tables"
     output = subprocess.check_output(command, shell=True).decode("utf-8")
     if tab in output:
-        command = nftCall + " delete table " + tab
+        command = cfg()['netfilter']['nft']['call'] + " delete table " + tab
         subprocess.call(command, shell=True)
         logging.info("Table %s has been dropped", tab)
     else:

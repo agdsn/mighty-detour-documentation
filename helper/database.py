@@ -9,6 +9,7 @@ def create_engine(name):
 
     database = False
     for db in cfg()['databases']:
+        logging.debug("search %s, fetch %s", name, db['name'])
         if db['name'] == name:
             database = db
             break
@@ -23,7 +24,7 @@ def create_engine(name):
                            + '@'
                            + database['host']
                            + '/'
-                           + database['db'], echo=True)
+                           + database['db'])
 
 
 def connect_db(name):
