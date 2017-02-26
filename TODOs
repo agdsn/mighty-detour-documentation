@@ -1,14 +1,11 @@
 Static NAT:
-- initial configuration (boot)
 - incremental updates
 - dynamic component (full support for roaming?)
 
 Port Forwardings:
-- initial configuration (boot)
 - incremental updates
 
 Throttling:
-- initial configuration (boot)
 - live updates
 - blacklist
 - whitelist
