@@ -57,7 +57,7 @@ def add_translation(translation, all_privs, preflength):
 
 def drop_translation(translated_net, all_privs, preflength):
     logging.debug("Deleting translation for private net %s", translated_net)
-    chain_name = chain_translation(all_privs=all_privs, priv_net=translated_net, preflength=preflength)
+    chain_name = chain_translation(subnet=all_privs, priv_net=translated_net, preflength=preflength)
     generic_string = "ip saddr " + str(translated_net)
     handle = rule_exists(value=generic_string, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
     if not handle:
