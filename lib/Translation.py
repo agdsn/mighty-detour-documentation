@@ -1,5 +1,6 @@
 from ipaddress import IPv4Network
 
+from helper.conntrack import drop_conntrack
 from helper.network import is_subnet_of
 from nft.rules import *
 
@@ -37,8 +38,7 @@ def add_translation(translation, all_privs, preflength):
     handle = rule_exists(value=translation_string, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
     if not handle:
         logging.debug("The exact translation %s does not yet exist", translation)
-
-        # TODO: handle (e.g. drop) conntrackd state for the private nets
+        drop_conntrack(translation.translated_net)
 
         generic_string = "ip saddr " + str(translation.translated_net)
         handle = rule_exists(value=generic_string, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
@@ -63,8 +63,6 @@ def drop_translation(translated_net, all_privs, preflength):
     if not handle:
         logging.debug("There is no translation present for private net %s", translated_net)
     else:
-
-        # TODO: drop conntrackd state
-
+        drop_conntrack(translated_net)
         drop_rule(handle=handle, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
 
