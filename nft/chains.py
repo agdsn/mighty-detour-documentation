@@ -6,7 +6,7 @@ from helper.config import cfg
 
 def chain_exists(chain_name, table):
     command = cfg()['netfilter']['nft']['call'] + " list chains " + table + " "\
-              + str(chain_name) + " | /bin/grep " + str(chain_name)
+              + str(chain_name) + " | /bin/grep '" + str(chain_name) + "'"
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\
         .decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
     if len(output) == 0:

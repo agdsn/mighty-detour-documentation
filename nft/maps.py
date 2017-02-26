@@ -5,7 +5,7 @@ from helper.config import cfg
 
 
 def map_contains_element(element, map, table):
-    command = cfg()['netfilter']['nft']['call'] + " list map " + table + " " + map + " | /bin/grep " + str(element)
+    command = cfg()['netfilter']['nft']['call'] + " list map " + table + " " + map + " | /bin/grep '" + str(element) + "'"
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\
         .decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
     if len(output) == 0:

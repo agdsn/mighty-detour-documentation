@@ -28,9 +28,9 @@ def rule_exists(value, table, chain=None):
     logging.debug("Check if a rule in table %s chain %s contains %s", table, chain, value)
     if chain is None:
         logging.debug("No chain specified, searching in whole nft table %s", table)
-        command = cfg()['netfilter']['nft']['call'] + " list table " + table + " -a -nnn | /bin/grep " + str(value)
+        command = cfg()['netfilter']['nft']['call'] + " list table " + table + " -a -nnn | /bin/grep '" + str(value) + "'"
     else:
-        command = cfg()['netfilter']['nft']['call'] + " list chain " + table + " " + chain + " -a -nnn | /bin/grep " + str(value)
+        command = cfg()['netfilter']['nft']['call'] + " list chain " + table + " " + chain + " -a -nnn | /bin/grep '" + str(value) + "'"
     logging.debug("Execute: " + command)
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT).decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
     if len(output) > 1:
