@@ -3,6 +3,6 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-tasks.create_tables()
+tasks.create_tables(database='static')
 
-tasks.initialize_nft()
+tasks.initialize_nft(database='static')
