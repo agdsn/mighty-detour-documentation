@@ -1,7 +1,8 @@
 import subprocess
 import logging
+from helper.config import cfg
 
-nftCall = "/usr/local/sbin/nft"
+nftCall = cfg()['netfilter']['nft']['call']
 
 
 def chain_exists(chain_name, table):

@@ -1,7 +1,8 @@
 import subprocess
 import logging
+from helper.config import cfg
 
-nftCall = "/usr/local/sbin/nft"
+nftCall = cfg()['netfilter']['nft']['call']
 
 
 def drop_table_if_exists(tab):

@@ -1,8 +1,9 @@
 from ipaddress import IPv4Network
+from helper.config import cfg
 from helper.network import is_subnet_of
 from nft.rules import *
 
-table = "nat"
+table = cfg()['netfilter']['translation']['table']
 
 
 def chain_translation(priv_net, subnet, preflength):

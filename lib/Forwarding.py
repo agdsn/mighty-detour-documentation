@@ -1,8 +1,9 @@
 from ipaddress import IPv4Network
 from nft.chains import *
 from nft.rules import *
+from helper.config import cfg
 
-table = "nat"
+table = cfg()['netfilter']['forwarding']['table']
 
 
 def chain_forwarding(public_ip):
@@ -27,7 +28,8 @@ def generate_forwardings(forwards):
 def add_forwarding(forward):
     logging.info("Create forwarding %s", forward)
     chain_name = chain_forwarding(forward.public_ip)
-    forward_string = str(forward.protocol) + " dport " + str(forward.source_port) + " ip saddr " + str(forward.public_ip) \
+    forward_string = str(forward.protocol) + " dport " + str(forward.source_port) + " ip saddr "\
+                     + str(forward.public_ip)\
                      + " dnat to " + str(forward.private_ip) + ":" + str(forward.destination_port)
     jump_string = "ip saddr " + str(forward.public_ip) + " goto " + chain_name
     if not chain_exists(chain_name=chain_name, table=table):
@@ -59,13 +61,15 @@ def drop_forwarding(forward):
         # look at the number of rules in the user chain
         count = chain_rulecount(chain_name=chain_forwarding(forward.public_ip), table=table)
         if count == 0:
-            logging.warning("The chain %s in table %s was empty, but a forward was expected: %s", table, chain_exists(table=table, chain_name=chain_forwarding(forward.public_ip)), forward)
+            logging.warning("The chain %s in table %s was empty, but a forward was expected: %s",
+                            table, chain_exists(table=table, chain_name=chain_forwarding(forward.public_ip)), forward)
         elif count == 1:
             drop_chain(chain=chain_forwarding(forward.public_ip), table=table)
         else:
             drop_rule(rule_exists(table=table, chain=chain_forwarding(forward.public_ip), value=forward_string))
     else:
-        logging.info("The public ip chain %s for the forwarding %s was not deleted because it does not exist", chain_forwarding(forward.public_ip), forward)
+        logging.info("The public ip chain %s for the forwarding %s was not deleted because it does not exist",
+                     chain_forwarding(forward.public_ip), forward)
 
 
 def drop_all_forwardings(public_ip):

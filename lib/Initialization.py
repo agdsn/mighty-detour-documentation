@@ -2,11 +2,11 @@ from lib.Throttle import *
 from lib.Forwarding import *
 from nft.tables import *
 
-nftCall = "/usr/local/sbin/nft"
-nftPreamble = "#!/usr/local/sbin/nft"
-table = "nat"
-tmpFile = "/tmp/nft.rules"
-maxLevel = 3
+nftCall = cfg()['netfilter']['nft']['call']
+nftPreamble = "#!" + nftCall
+table = cfg()['netfilter']['translation']['table']
+tmpFile = cfg()['netfilter']['nft']['tmpfile']
+maxLevel = cfg()['netfilter']['preflength']
 
 
 def createLevel(net, pref, level, preflength, translations):
@@ -37,7 +37,6 @@ def createLeafs(net, prefix, preflength, translations):
             src += "add rule " + table + " " + prefix + " ip saddr " + str(sub) + " snat " + str(translations[sub]) + "\n"
 
     return src
-
 
 
 def initialize(private_net, translations, throttles, forwardings, blacklist, whitelist, preflength=3):
