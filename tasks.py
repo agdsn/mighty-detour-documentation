@@ -25,12 +25,12 @@ def update_translation(net_passed, database):
         logging.info("Removing translation for private net %s", net_passed)
         drop_translation(translated_net=net_passed,
                          all_privs=IPv4Network(cfg()['cgn']['net']),
-                         preflength=cfg()['netfilter']['preflength'])
+                         preflength=int(cfg()['netfilter']['preflength']))
     elif len(res) == 1:
         logging.info("Adding translation for private net %s", res.first())
         add_translation(translation=res.first(),
                           all_privs=IPv4Network(cfg()['cgn']['net']),
-                          preflength=cfg()['netfilter']['preflength'])
+                          preflength=int(cfg()['netfilter']['preflength']))
     else:
         logging.critical("Multiple translations for the same private net found, doing nothing")
         for t in res:
