@@ -21,12 +21,12 @@ def update_translation(net_passed, database):
     session = connect_db(name=database)
     res = session.query(Translation).filter(Translation.translated_net == str(net_passed)).all()
 
-    if res.rowcount == 0:
+    if len(res) == 0:
         logging.info("Removing translation for private net %s", net_passed)
         drop_translation(translated_net=net_passed,
                          all_privs=IPv4Network(cfg()['cgn']['net']),
                          preflength=cfg()['netfilter']['preflength'])
-    elif res.rowcount == 1:
+    elif len(res) == 1:
         logging.info("Adding translation for private net %s", res.first())
         add_translation(translation=res.first(),
                           all_privs=IPv4Network(cfg()['cgn']['net']),
@@ -42,10 +42,10 @@ def update_throttle(net_passed, database):
     session = connect_db(name=database)
     res = session.query(Throttle).filter(Throttle.translated_net == str(net_passed)).all()
 
-    if res.rowcount == 0:
+    if len(res) == 0:
         logging.info("Removing throttle for private net %s", net_passed)
         drop_throttle(translated_net=net_passed)
-    elif res.rowcount == 1:
+    elif len(res) == 1:
         logging.info("Adding throttle for private net %s", res.first())
         add_throttle(translation=res.first())
     else:
