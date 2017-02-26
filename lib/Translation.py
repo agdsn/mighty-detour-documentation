@@ -34,7 +34,7 @@ def add_translation(translation, all_privs, preflength):
     logging.debug("Adding translation %s", translation)
     translation_string = "ip saddr " + str(translation.translated_net) \
                         + " snat to " + str(translation.public_ip)
-    chain_name = chain_translation(subnet=all_privs, priv_net=translation.translated_net, preflength=preflength)
+    chain_name = chain_translation(priv_net=all_privs, subnet=translation.translated_net, preflength=preflength)
     handle = rule_exists(value=translation_string, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
     if not handle:
         logging.debug("The exact translation %s does not yet exist", translation)
@@ -57,7 +57,7 @@ def add_translation(translation, all_privs, preflength):
 
 def drop_translation(translated_net, all_privs, preflength):
     logging.debug("Deleting translation for private net %s", translated_net)
-    chain_name = chain_translation(subnet=all_privs, priv_net=translated_net, preflength=preflength)
+    chain_name = chain_translation(priv_net=all_privs, subnet=translated_net, preflength=preflength)
     generic_string = "ip saddr " + str(translated_net)
     handle = rule_exists(value=generic_string, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
     if not handle:

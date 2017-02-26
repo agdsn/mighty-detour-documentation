@@ -23,7 +23,7 @@ def update_translation(net_passed, database):
 
     if len(res) == 0:
         logging.info("Removing translation for private net %s", net_passed)
-        drop_translation(translated_net=net_passed,
+        drop_translation(translated_net=IPv4Network(net_passed),
                          all_privs=IPv4Network(cfg()['cgn']['net']),
                          preflength=int(cfg()['netfilter']['preflength']))
     elif len(res) == 1:
