@@ -3,3 +3,19 @@
 - maybe reimplement throttle updates due to map limitations
 - support multiple databases, maybe for different private subnets
 - add dbhost-parameter for updates
+
+
+Static NAT:
+- initial configuration (boot)
+- incremental updates
+- dynamic component (full support for roaming?)
+
+Port Forwardings:
+- initial configuration (boot)
+- incremental updates
+
+Throttling:
+- initial configuration (boot)
+- live updates
+- blacklist
+- whitelist
