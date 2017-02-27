@@ -110,30 +110,48 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     src += "    }\n"
     src += "\n"
     for throttle in throttles:
-        src += "    chain " + chain_throttle(throttle.translated_net) + " {\n"
+        src += "    chain " + chain_throttle(throttle.public_ip) + " {\n"
         src += "        limit rate " + str(throttle.speed) + " kbytes/second accept\n"
         src += "        drop\n"
         src += "    }\n"
         src += "\n"
     # Throttle decision chain
-    src += "    chain ratelimit_map {\n"
+    src += "    chain ratelimit_map_cgn {\n"
+    src += "        ip daddr vmap @ " + cfg()['netfilter']['throttle']['map'] +"\n"
+    src += "    }\n"
+    src += "\n"
+    src += "    chain ratelimit_map_inet {\n"
     src += "        ip saddr vmap @ " + cfg()['netfilter']['throttle']['map'] +"\n"
     src += "    }\n"
     src += "\n"
     # Exception chain (aka blacklist)
-    src += "    chain ratelimit_exceptions {\n"
+    src += "    chain ratelimit_exceptions_cgn {\n"
     for b in blacklist:
-        src += "        ip saddr " + str(b) + " goto ratelimit_map\n"
+        src += "        ip daddr " + str(b) + " goto ratelimit_map_cgn\n"
+    src += "        accept\n"
+    src += "    }\n"
+    src += "\n"
+    src += "    chain ratelimit_exceptions_inet {\n"
+    for b in blacklist:
+        src += "        ip saddr " + str(b) + " goto ratelimit_map_inet\n"
     src += "        accept\n"
     src += "    }\n"
     src += "\n"
     # Throttle entry chain, including the whitelist
-    src += "    chain ratelimit {\n"
+    src += "    chain ratelimit_cgn {\n"
     src += "        type filter hook ingress device " + cfg()['cgn']['interface'] + " priority 0;\n"
     src += "        policy accept;\n"
     for w in whitelist:
-        src += "        ip saddr " + str(w) + " goto ratelimit_exceptions\n"
-    src += "        goto ratelimit_map\n"
+        src += "        ip daddr " + str(w) + " goto ratelimit_exceptions_cgn\n"
+    src += "        goto ratelimit_map_cgn\n"
+    src += "    }\n"
+    src += "\n"
+    src += "    chain ratelimit_inet {\n"
+    src += "        type filter hook ingress device " + cfg()['inet']['interface'] + " priority 0;\n"
+    src += "        policy accept;\n"
+    for w in whitelist:
+        src += "        ip saddr " + str(w) + " goto ratelimit_exceptions_inet\n"
+    src += "        goto ratelimit_map_inet\n"
     src += "    }\n"
     src += "}\n"
 
@@ -147,7 +165,7 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     drop_conntrack(cfg()['cgn']['net'])
     logging.debug("Drop previous configuration and apply new one")
     drop_table_if_exists(cfg()['netfilter']['translation']['table'])
-    drop_table_if_exists(cfg()['netfilter']['throttle']['table'])
+    drop_table_if_exists("netdev " + cfg()['netfilter']['throttle']['table'])
     # eXecutor!
     subprocess.call(cfg()['netfilter']['nft']['call'] + " -f " +  cfg()['netfilter']['nft']['tmpfile'], shell=True)
     # drop file

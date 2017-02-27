@@ -2,6 +2,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import CIDR
+from sqlalchemy.dialects.postgresql import INET
 
 from model.base import Base
 
@@ -10,6 +11,7 @@ class Throttle(Base):
     __tablename__ = 'throttle'
 
     translated_net = Column(CIDR, nullable=False, primary_key=True)
+    public_ip = Column(INET, nullable=False)
     comment = Column(String)
     speed = Column(Integer, nullable=False)
 

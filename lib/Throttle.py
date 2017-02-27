@@ -1,46 +1,24 @@
 import subprocess
 import logging
 
-from ipaddress import IPv4Network
+from ipaddress import IPv4Network, IPv4Address
 from helper.config import cfg
 from nft.chains import chain_exists, add_chain, drop_chain
 from nft.maps import map_contains_element, add_map_element, delete_map_element
 from nft.rules import add_rule
 
 
-def chain_throttle(translated_net):
-    return "ratelimit-" + str(IPv4Network(translated_net).network_address).replace(".", "-")
+def chain_throttle(ip):
+    return "ratelimit-" + str(IPv4Address(ip)).replace(".", "-")
 
 
 def generate_throttle_map_elements(throttles):
     logging.debug("Generate throttling map %s entries", cfg()['netfilter']['throttle']['map'])
     ret = []
     for throttle in throttles:
-        ret.append(throttle.translated_net + " : goto " + chain_throttle(throttle.translated_net))
+        ret.append(throttle.translated_net + " : goto " + chain_throttle(throttle.public_ip))
+        ret.append(throttle.public_ip + " : goto " + chain_throttle(throttle.public_ip))
     return ret
-
-
-def generate_throttle_chain(throttle):
-    chain_name = chain_throttle(throttle.translated_net)
-    src = "add chain " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + " { policy drop; }\n"
-    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + " limit rate " + str(throttle.speed)
-    src += " kbytes/second accept\n"
-
-
-def generate_throttle(throttle):
-    chain_name = chain_throttle(throttle.translated_net)
-    logging.info("Generate throttling %s", throttle)
-    src = "add chain " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + "\n"
-    src += "add element " + cfg()['netfilter']['throttle']['table'] + " " + cfg()['netfilter']['throttle']['map'] + " { " + str(throttle.translated_net)
-    src += " : goto " + chain_name + " }\n"
-    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + " limit rate " + str(throttle.speed)
-    src += " kbytes/second accept\n"
-
-    return src
-
-
-def update_throttle(throttle):
-    logging.critical("Not implemented yet!")
 
 
 def add_throttle(throttle):
@@ -61,7 +39,18 @@ def add_throttle(throttle):
                             key=throttle.translated_net,
                             value="goto " + chain_name)
     else:
-        logging.debug("Throttle %s should be added, but the element was already present in the map %s!", throttle, cfg()['netfilter']['throttle']['map'])
+        logging.debug("Throttle %s should be added, but the element %s was already present in the map %s!",
+                      throttle, throttle.translated_net, cfg()['netfilter']['throttle']['map'])
+    if not map_contains_element(table=cfg()['netfilter']['throttle']['table'],
+                                    map=cfg()['netfilter']['throttle']['map'],
+                                    element=throttle.public_ip):
+        add_map_element(table=cfg()['netfilter']['throttle']['table'],
+                            map=cfg()['netfilter']['throttle']['map'],
+                            key=throttle.public_ip,
+                            value="goto " + chain_name)
+    else:
+        logging.debug("Throttle %s should be added, but the element %s was already present in the map %s!",
+                      throttle, throttle.public_ip, cfg()['netfilter']['throttle']['map'])
 
 
 def drop_throttle(throttle):
@@ -75,4 +64,10 @@ def drop_throttle(throttle):
     if map_contains_element(table=table_name, map=map_name, element=throttle.translated_net):
         delete_map_element(table=table_name, map=map_name, key=throttle.translated_net)
     else:
-        logging.debug("Throttle %s should be deleted, but the element with key %s was not present in map %s!", throttle.translated_net, map_name)
+        logging.debug("Throttle %s should be deleted, but the element with key %s was not present in map %s!",
+                      throttle, throttle.translated_net, map_name)
+    if map_contains_element(table=table_name, map=map_name, element=throttle.public_ip):
+        delete_map_element(table=table_name, map=map_name, key=throttle.public_ip)
+    else:
+        logging.debug("Throttle %s should be deleted, but the element with key %s was not present in map %s!",
+                      throttle, throttle.public_ip, map_name)
