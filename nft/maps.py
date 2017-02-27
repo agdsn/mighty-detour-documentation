@@ -34,6 +34,6 @@ def add_map_element(table, map, key, value):
 
 
 def delete_map_element(table, map, key):
-    command = cfg()['netfilter']['nft']['call'] + " delete element" + table + " " + map + " " + str(key)
+    command = cfg()['netfilter']['nft']['call'] + " delete element " + table + " " + map + " { " + str(key) + " } "
     subprocess.call(command, shell=True)
     logging.debug("The element %s has been deleted from map %s in table %s", key, map, table)
