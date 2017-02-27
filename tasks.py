@@ -25,8 +25,8 @@ def update_translation(net_passed, database):
         logging.info("Removing translation for private net %s", net_passed)
         drop_translation(translated_net=IPv4Network(net_passed))
     elif len(res) == 1:
-        logging.info("Adding translation for private net %s", res.first())
-        add_translation(translation=res.first())
+        logging.info("Adding translation for private net %s", res[0])
+        add_translation(translation=res[0])
     else:
         logging.critical("Multiple translations for the same private net found, doing nothing")
         for t in res:
