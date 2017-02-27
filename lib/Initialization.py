@@ -129,7 +129,7 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     src += "\n"
     # Throttle entry chain, including the whitelist
     src += "    chain ratelimit {\n"
-    src += "        type filter hook ingress priority 100;\n"
+    src += "        type filter hook ingress device " + cfg()['cgn']['interface'] + " priority 100;\n"
     src += "        policy accept;\n"
     for w in whitelist:
         src += "        ip saddr " + str(w) + " goto ratelimit_exceptions\n"
