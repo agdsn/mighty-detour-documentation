@@ -5,7 +5,7 @@ from nft.rules import *
 
 
 def chain_translation(subnet):
-    return "postrouting-" + str(IPv4Network(subnet).supernet(new_prefix=cfg()['tree']['lowlevel'])).replace(".", "-").replace("/", "-")
+    return "postrouting-" + str(IPv4Network(subnet).supernet(new_prefix=cfg()['netfilter']['tree']['lowlevel'])).replace(".", "-").replace("/", "-")
 
 
 def add_translation(translation):

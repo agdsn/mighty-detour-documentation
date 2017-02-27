@@ -18,67 +18,88 @@ app = Celery('tasks', broker = 'pyamqp://' + cfg()['broker']['user'] + '@' + cfg
 
 @app.task
 def update_translation(net_passed, database):
-    session = connect_db(name=database)
-    res = session.query(Translation).filter(Translation.translated_net == str(net_passed)).all()
+    try:
+        session = connect_db(name=database)
+        res = session.query(Translation).filter(Translation.translated_net == str(net_passed)).all()
 
-    if len(res) == 0:
-        logging.info("Removing translation for private net %s", net_passed)
-        drop_translation(translated_net=IPv4Network(net_passed))
-    elif len(res) == 1:
-        logging.info("Adding translation for private net %s", res[0])
-        add_translation(translation=res[0])
-    else:
-        logging.critical("Multiple translations for the same private net found, doing nothing")
-        for t in res:
-            logging.error("Found translation %s", t)
+        if len(res) == 0:
+            logging.info("Removing translation for private net %s", net_passed)
+            drop_translation(translated_net=IPv4Network(net_passed))
+        elif len(res) == 1:
+            logging.info("Adding translation for private net %s", res[0])
+            add_translation(translation=res[0])
+        else:
+            logging.critical("Multiple translations for the same private net found, doing nothing")
+            for t in res:
+                logging.error("Found translation %s", t)
+
+    except KeyError:
+        logging.critical("Connection to database %s was not successfull!", database)
+
+
 
 
 @app.task
 def update_throttle(net_passed, database):
-    session = connect_db(name=database)
-    res = session.query(Throttle).filter(Throttle.translated_net == str(net_passed)).all()
+    try:
+        session = connect_db(name=database)
+        res = session.query(Throttle).filter(Throttle.translated_net == str(net_passed)).all()
 
-    if len(res) == 0:
-        logging.info("Removing throttle for private net %s", net_passed)
-        drop_throttle(translated_net=net_passed)
-    elif len(res) == 1:
-        logging.info("Adding throttle for private net %s", res[0])
-        add_throttle(translation=res[0])
-    else:
-        logging.critical("Multiple throttles for the same private net found, doing nothing")
-        for t in res:
-            logging.error("Found throttle: %s", t)
+        if len(res) == 0:
+            logging.info("Removing throttle for private net %s", net_passed)
+            drop_throttle(translated_net=net_passed)
+        elif len(res) == 1:
+            logging.info("Adding throttle for private net %s", res[0])
+            add_throttle(translation=res[0])
+        else:
+            logging.critical("Multiple throttles for the same private net found, doing nothing")
+            for t in res:
+                logging.error("Found throttle: %s", t)
+
+    except KeyError:
+        logging.critical("Connection to database %s was not successfull!", database)
 
 
 @app.task
 def update_forwarding(public_ip, database):
-    session = connect_db(name=database)
-    res = session.query(Forwarding).filter(Forwarding.public_ip == str(public_ip)).all()
+    try:
+        session = connect_db(name=database)
+        res = session.query(Forwarding).filter(Forwarding.public_ip == str(public_ip)).all()
 
-    drop_all_forwardings(translated_net=public_ip)
+        drop_all_forwardings(translated_net=public_ip)
 
-    for r in res:
-        logging.info("Adding forwarding %s", r)
-        add_forwarding(translation=r)
+        for r in res:
+            logging.info("Adding forwarding %s", r)
+            add_forwarding(translation=r)
+
+    except KeyError:
+        logging.critical("Connection to database %s was not successfull!", database)
 
 
 @app.task
 def initialize_nft(database):
-    session = connect_db(database)
-    trans = session.query(Translation).all()
+    try:
+        session = connect_db(database)
+        trans = session.query(Translation).all()
 
-    d = {}
-    for t in trans:
-        d[IPv4Network(t.translated_net)] = IPv4Address(t.public_ip)
-    throttles = session.query(Throttle).all()
-    forwardings = session.query(Forwarding).all()
+        d = {}
+        for t in trans:
+            d[IPv4Network(t.translated_net)] = IPv4Address(t.public_ip)
+        throttles = session.query(Throttle).all()
+        forwardings = session.query(Forwarding).all()
 
-    initialize(translations=d,
-               throttles=throttles,
-               blacklist=cfg()['blacklist'],
-               whitelist=cfg()['whitelist'],
-               forwardings=forwardings)
+        initialize(translations=d,
+                   throttles=throttles,
+                   blacklist=cfg()['blacklist'],
+                   whitelist=cfg()['whitelist'],
+                   forwardings=forwardings)
+
+    except KeyError:
+        logging.critical("Connection to database %s was not successfull!", database)
 
 
 def create_tables(database):
-    Base.metadata.create_all(define_engine(database))
+    try:
+        Base.metadata.create_all(define_engine(database))
+    except KeyError:
+        logging.critical("Connection to database %s was not successfull!", database)
