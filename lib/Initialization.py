@@ -74,7 +74,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
         subnets = private_net.subnets(prefixlen_diff=12 - private_net.prefixlen)
         i = 0
         for sub in subnets:
-            src += "    chain postrouting-level-" + str(i) + " {\n"
+            src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-" + str(i)
             src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr "\
                    + str(sub) + " goto postrouting-level-" + str(i) + "\n"
             src += create_level(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
@@ -86,7 +86,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "\n"
 
     # Throttling
-    src += "table ip " + cfg()['netfilter']['throttle']['table'] + "{\n"
+    src += "table ip " + cfg()['netfilter']['throttle']['table'] + " {\n"
     src += "    map " + cfg()['netfilter']['throttle']['map'] + " {\n"
     src += "        type ipv4_addr: verdict;\n"
     src += "        flags interval;\n"
