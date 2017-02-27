@@ -28,7 +28,7 @@ def map_contains_element(element, map, table):
 
 
 def add_map_element(table, map, key, value):
-    command = cfg()['netfilter']['nft']['call'] + " add element" + table + " " + map + " { " + str(key) + " : " + str(value) + " } "
+    command = cfg()['netfilter']['nft']['call'] + " add element " + table + " " + map + " { " + str(key) + " : " + str(value) + " } "
     subprocess.call(command, shell=True)
     logging.debug("The element %s with value %s has been added to map %s in table %s", key, value, map, table)
 

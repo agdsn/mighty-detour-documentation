@@ -34,10 +34,13 @@ def add_throttle(throttle):
     map = cfg()['netfilter']['throttle']['map']
     logging.info("Add throttling %s", throttle)
     if not chain_exists(chain_name=chain_name, table=table_name):
-        add_chain(chain_name, table_name, options="policy drop;")
+        add_chain(chain_name, table_name)
         add_rule(table=table_name,
                  chain=chain_name,
                  rule="limit rate " + str(throttle.speed) + " kbytes/second accept")
+        add_rule(table=table_name,
+                 chain=chain_name,
+                 rule="drop")
     else:
         logging.debug("Throttle %s should be added, but the chain %s was already present!", throttle, chain_name)
     if not map_contains_element(table=table_name,
