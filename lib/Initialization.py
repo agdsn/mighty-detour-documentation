@@ -44,11 +44,11 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
 
     translos = {}
     # Preprocess translations
-    for public_ip in translations.keys():
-        private_scale_net = str(translations[public_ip].network_address) + "/" + cfg()['netfilter']['tree']['lowlevel']
+    for translated_net in translations.keys():
+        private_scale_net = str(translations[translated_net].network_address) + "/" + cfg()['netfilter']['tree']['lowlevel']
         if private_scale_net not in translos.keys():
             translos[private_scale_net] = []
-        translos[private_scale_net].append("ip saddr " + str(public_ip) + " snat to " + str(public_ip))
+        translos[private_scale_net].append("ip saddr " + str(translated_net) + " snat to " + str(translations[translated_net]))
 
     src = "#!" + cfg()['netfilter']['nft']['call'] + "\n"
     src += "\n"
