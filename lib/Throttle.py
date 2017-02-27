@@ -68,13 +68,13 @@ def drop_throttle(private_net, public_ip):
         drop_chain(chain=chain_name, table=table_name)
     else:
         logging.debug("Throttle should be deleted, but the chain %s was not present in table %s!", chain_name, table_name)
-    if map_contains_element(table=table_name, map=map_name, element=private_net):
-        delete_map_element(table=table_name, map=map_name, key=private_net)
+    if map_contains_element(table=table_name, map=map_name+"_cgn", element=private_net):
+        delete_map_element(table=table_name, map=map_name+"_cgn", key=private_net)
     else:
         logging.debug("Throttle should be deleted, but the element with key %s was not present in map %s!",
                       private_net, map_name)
-    if map_contains_element(table=table_name, map=map_name, element=public_ip):
-        delete_map_element(table=table_name, map=map_name, key=public_ip)
+    if map_contains_element(table=table_name, map=map_name+"_inet", element=public_ip):
+        delete_map_element(table=table_name, map=map_name+"_inet", key=public_ip)
     else:
         logging.debug("Throttle should be deleted, but the element with key %s was not present in map %s!",
                       public_ip, map_name)
