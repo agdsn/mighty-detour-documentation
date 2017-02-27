@@ -9,6 +9,10 @@ def chain_forwarding(public_ip):
     return "forwarding-" + str(IPv4Network(str(public_ip)).network_address).replace(".","-")
 
 
+def generate_forwarding_jump(forward):
+    return "ip saddr " + " goto " + chain_forwarding(forward.public_ip)
+
+
 def generate_forwardings(forwards):
     src = ""
     chains = []

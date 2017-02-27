@@ -38,16 +38,43 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src = "#!" + cfg()['netfilter']['nft']['call'] + "\n"
     src += "\n"
 
-    # SNAT configuration
-    src += "add table " + cfg()['netfilter']['translation']['table'] + "\n"
-    src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting { type nat hook postrouting priority 0 ;}\n"
-    src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting meta nftrace set 1\n"
+    # Translation jump in configuration
+    src += "table ip " + cfg()['netfilter']['translation']['table'] + " {\n"
+    src += "\n"
+    src += "    chain postrouting {\n"
+    src += "        type nat hook postrouting priority 0;\n"
+    src += "        meta nftrace set 1\n"
+    src += "    }\n"
+    src += "\n"
+    # DNAT aka portforwarding
+    forward_cache = {}
+    for f in forwardings:
+        if f.public_ip not in forward_cache.keys():
+            forward_cache[f.public_ip] = []
+        forward_cache[f.public_ip].append(str(f.protocol) + " dport " + str(f.source_port) + " ip saddr "
+                                          + str(f.public_ip) + " dnat to "
+                                          + str(f.private_ip) + ":"
+                                          + str(f.destination_port))
+    src += "    chain prerouting {\n"
+    src += "        type nat hook prerouting priority 0;\n"
+    for f_public_ip in forward_cache.keys():
+        src += "        ip saddr " + " goto " + chain_forwarding(f_public_ip) + "\n"
+    src += "    }\n"
+    src += "\n"
+    for f_public_ip in forward_cache.keys():
+        src += "    chain " + chain_forwarding(f_public_ip) + " {\n"
+        for f_port_rule in forward_cache[f_public_ip]:
+            src += "        " + f_port_rule + "\n"
+        src += "    }\n"
+        src +=  "\n"
+    src += "}\n"
+    src += "\n"
 
     if private_net.prefixlen < 12:
         subnets = private_net.subnets(prefixlen_diff=12 - private_net.prefixlen)
         i = 0
         for sub in subnets:
-            src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-" + str(i) + "\n"
+            src += "    chain postrouting-level-" + str(i) + " {\n"
             src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr "\
                    + str(sub) + " goto postrouting-level-" + str(i) + "\n"
             src += create_level(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
@@ -57,11 +84,6 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
         src += create_level(private_net, "postrouting-level-0", 0, translations=translations) + "\n"
         src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr " + str(private_net) + " goto postrouting-level-0\n"
     src += "\n"
-
-    # DNAT aka Portforwardings
-    src += "add chain " + cfg()['netfilter']['translation']['table'] + " prerouting { type nat hook prerouting priority 0 ;}\n"
-    src += generate_forwardings(forwardings)
-    logging.debug("End generation initial nft configuration")
 
     # Throttling
     src += "table ip " + cfg()['netfilter']['throttle']['table'] + "{\n"
