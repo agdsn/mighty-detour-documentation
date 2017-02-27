@@ -5,36 +5,6 @@ from lib.Forwarding import *
 from nft.tables import *
 
 
-def create_level(net, pref, level, preflength, translations):
-    if level >= cfg()['netfilter']['preflength']:
-        return create_leafs(net, pref, preflength=preflength, translations=translations)
-
-    subnets = net.subnets(prefixlen_diff=preflength)
-
-    src = ""
-
-    i = 0
-    for sub in subnets:
-        newPref = pref + "-" + str(i)
-        src += "add chain " + cfg()['netfilter']['translation']['table'] + " " + newPref + "\n"
-        src += "add rule " + cfg()['netfilter']['translation']['table'] + " " + pref + " ip saddr " + str(sub) + " goto " + newPref + "\n"
-        src += create_level(sub, newPref, level + 1, translations=translations, preflength=preflength) + "\n"
-        i += 1;
-
-    return src
-
-
-def create_leafs(net, prefix, preflength, translations):
-    subnets = net.subnets(prefixlen_diff=preflength)
-    src = ""
-    for sub in subnets:
-        if sub in translations:
-            # only add rule if translation is present
-            src += "add rule " + cfg()['netfilter']['translation']['table'] + " " + prefix + " ip saddr " + str(sub) + " snat " + str(translations[sub]) + "\n"
-
-    return src
-
-
 def chain_translation_name(net):
     return "postrouting-" + str(IPv4Network(net)).replace(".", "-").replace("/", "-")
 

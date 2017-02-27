@@ -1,40 +1,18 @@
 from ipaddress import IPv4Network
 
 from helper.conntrack import drop_conntrack
-from helper.network import is_subnet_of
 from nft.rules import *
 
 
-def chain_translation(priv_net, subnet, preflength):
-    preflength = int(preflength)
-    path = "postrouting-level-"
-    subnets = priv_net.subnets(prefixlen_diff=12 - priv_net.prefixlen)
-    current_net = IPv4Network('0.0.0.0/0')
-    i = 0
-    for sub in subnets:
-        if is_subnet_of(subnet,sub):
-            path += str(i)
-            current_net = sub
-            break
-        i += 1
-    while current_net.prefixlen + preflength < subnet.prefixlen:
-        path += "-"
-        i = 0
-        subnets = current_net.subnets(prefixlen_diff=preflength)
-        for sub in subnets:
-            if is_subnet_of(subnet,sub):
-                path += str(i)
-                current_net = sub
-                break
-            i += 1
-    return path
+def chain_translation(subnet):
+    return "postrouting-" + str(IPv4Network(subnet).supernet(new_prefix=cfg()['tree']['lowlevel'])).replace(".", "-").replace("/", "-")
 
 
-def add_translation(translation, all_privs, preflength):
+def add_translation(translation):
     logging.debug("Adding translation %s", translation)
     translation_string = "ip saddr " + str(translation.translated_net) \
                         + " snat to " + str(translation.public_ip)
-    chain_name = chain_translation(priv_net=all_privs, subnet=translation.translated_net, preflength=preflength)
+    chain_name = chain_translation(subnet=translation.translated_net)
     handle = rule_exists(value=translation_string, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
     if not handle:
         logging.debug("The exact translation %s does not yet exist", translation)
@@ -55,9 +33,9 @@ def add_translation(translation, all_privs, preflength):
         logging.info("The translation %s is already present", translation)
 
 
-def drop_translation(translated_net, all_privs, preflength):
+def drop_translation(translated_net):
     logging.debug("Deleting translation for private net %s", translated_net)
-    chain_name = chain_translation(priv_net=all_privs, subnet=translated_net, preflength=preflength)
+    chain_name = chain_translation(subnet=translated_net)
     generic_string = "ip saddr " + str(translated_net)
     handle = rule_exists(value=generic_string, chain=chain_name, table=cfg()['netfilter']['translation']['table'])
     if not handle:
