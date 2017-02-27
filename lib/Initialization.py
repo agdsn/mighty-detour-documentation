@@ -1,5 +1,6 @@
 import math
 
+from helper.conntrack import drop_conntrack
 from lib.Throttle import *
 from lib.Forwarding import *
 from nft.tables import *
@@ -142,6 +143,7 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     file.close()
 
     # drop previous content
+    drop_conntrack(cfg()['cgn']['net'])
     logging.debug("Drop previous configuration and apply new one")
     drop_table_if_exists(cfg()['netfilter']['translation']['table'])
     drop_table_if_exists(cfg()['netfilter']['throttle']['table'])
