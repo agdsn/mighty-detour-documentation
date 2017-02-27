@@ -80,7 +80,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     cidr_mask = cgn.prefixlen
     depth = 1
     while cidr_mask <= lowlevel:
-        for sub in cgn.subnets(prefixlen_diff=cidr_tree_first_level*depth):
+        for sub in cgn.subnets(prefixlen_diff=cidr_level_size*depth + cidr_tree_first_level):
             src += "    # Depth: " + str(depth) + "\n"
             src += "    chain " + chain_translation_name(sub) + " {\n"
             if cidr_mask + cidr_level_size <= lowlevel:
@@ -88,7 +88,6 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
                     src += "        ip saddr " + str(s) + " goto " + chain_translation_name(s) + "\n"
             src += "    }\n"
             src += "\n"
-        cidr_tree_first_level = cidr_level_size
         cidr_mask += cidr_level_size
         depth += 1
     src += "\n"
