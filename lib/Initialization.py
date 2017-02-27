@@ -58,7 +58,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "    chain prerouting {\n"
     src += "        type nat hook prerouting priority 0;\n"
     for f_public_ip in forward_cache.keys():
-        src += "        ip saddr " + " goto " + chain_forwarding(f_public_ip) + "\n"
+        src += "        ip saddr " + f_public_ip + " goto " + chain_forwarding(f_public_ip) + "\n"
     src += "    }\n"
     src += "\n"
     for f_public_ip in forward_cache.keys():
@@ -74,7 +74,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
         subnets = private_net.subnets(prefixlen_diff=12 - private_net.prefixlen)
         i = 0
         for sub in subnets:
-            src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-" + str(i)
+            src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-" + str(i) + "\n"
             src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr "\
                    + str(sub) + " goto postrouting-level-" + str(i) + "\n"
             src += create_level(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
