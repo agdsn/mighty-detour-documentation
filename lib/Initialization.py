@@ -58,30 +58,49 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
         src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr " + str(private_net) + " goto postrouting-level-0\n"
     src += "\n"
 
-    # Throttling
-    src += "add table " + cfg()['netfilter']['throttle']['table'] + "\n"
-    src += "add map " + cfg()['netfilter']['throttle']['table'] + " " + cfg()['netfilter']['throttle']['map'] + " { type ipv4_addr: verdict ; flags interval;}\n"
-    for throttle in throttles:
-        src += generate_throttle(throttle)
-    # Throttle decision chain
-    src += "add chain " + cfg()['netfilter']['throttle']['table'] + " ratelimit_map\n"
-    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_map ip saddr vmap @" + cfg()['netfilter']['throttle']['map'] + ";\n"
-    # Exception chain
-    src += "add chain " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions\n"
-    for b in blacklist:
-        src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions ip saddr " + str(b) + " goto ratelimit_map\n"
-    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions accept\n"
-    # Throttle entry chain
-    src += "add chain " + cfg()['netfilter']['throttle']['table'] + " ratelimit { type filter hook forward priority 0; }\n"
-    for w in whitelist:
-        src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit ip saddr " + str(w) + " goto ratelimit_exceptions\n"
-    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit goto ratelimit_map\n"
-    src += "\n"
-
     # DNAT aka Portforwardings
     src += "add chain " + cfg()['netfilter']['translation']['table'] + " prerouting { type nat hook prerouting priority 0 ;}\n"
     src += generate_forwardings(forwardings)
     logging.debug("End generation initial nft configuration")
+
+    # Throttling
+    src += "table ip " + cfg()['netfilter']['throttle']['table'] + "{\n"
+    src += "    map " + cfg()['netfilter']['throttle']['map'] + " {\n"
+    src += "        type ipv4_addr: verdict;\n"
+    src += "        flags interval;\n"
+    src += "        elements = {\n"
+    src += "            " + ','.join(generate_throttle_map_elements(throttles))
+    src += "        }\n"
+    src += "    }\n"
+    src += "\n"
+    for throttle in throttles:
+        src += "    chain " + chain_throttle(throttle.translated_net) + " {\n"
+        src += "        limit rate " + str(throttle.speed) + " kbytes/second accept"
+        src += "    }\n"
+        src += "\n"
+    # Throttle decision chain
+    src += "    chain ratelimit_map {\n"
+    src += "        ip saddr vmap @ " + cfg()['netfilter']['throttle']['map'] +"\n"
+    src += "    }\n"
+    src += "\n"
+    # Exception chain (aka blacklist)
+    for b in blacklist:
+        src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions ip saddr " + str(b) + " goto ratelimit_map\n"
+    src += "    chain ratelimit_exceptions {\n"
+    for b in blacklist:
+        src += "        " + str(b) + " goto ratelimit_map\n"
+    src += "        accept\n"
+    src += "    }\n"
+    src += "\n"
+    # Throttle entry chain, including the whitelist
+    src += "    chain ratelimit {\n"
+    src += "        type filter hook forward priority 0;\n"
+    src += "        policy accept;\n"
+    for w in whitelist:
+        src += "        ip saddr " + str(w) + " goto ratelimit_exceptions\n"
+    src += "        goto ratelimit_map\n"
+    src += "    }\n"
+    src += "}\n"
 
     # write stuff to tmpFile
     logging.debug("Write initial nft configuration to file: " + cfg()['netfilter']['nft']['tmpfile'])

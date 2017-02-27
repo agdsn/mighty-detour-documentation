@@ -12,9 +12,23 @@ def chain_throttle(translated_net):
     return "ratelimit-" + str(IPv4Network(translated_net).network_address).replace(".", "-")
 
 
+def generate_throttle_map_elements(throttles):
+    logging.debug("Generate throttling map %s entries", cfg()['netfilter']['throttle']['map'])
+    ret = []
+    for throttle in throttles:
+        ret.append(throttle.translated_net + " : goto " + chain_throttle(throttle.translated_net))
+    return ret
+
+
+def generate_throttle_chain(throttle):
+    chain_name = chain_throttle(throttle.translated_net)
+    src = "add chain " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + "\n"
+    src += "add rule " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + " limit rate " + str(throttle.speed)
+    src += " kbytes/second accept\n"
+
 def generate_throttle(throttle):
     chain_name = chain_throttle(throttle.translated_net)
-    logging.info("Add throttling %s", throttle)
+    logging.info("Generate throttling %s", throttle)
     src = "add chain " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + "\n"
     src += "add element " + cfg()['netfilter']['throttle']['table'] + " " + cfg()['netfilter']['throttle']['map'] + " { " + str(throttle.translated_net)
     src += " : goto " + chain_name + " }\n"
