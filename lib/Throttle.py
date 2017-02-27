@@ -12,11 +12,18 @@ def chain_throttle(ip):
     return "ratelimit-" + str(IPv4Address(ip)).replace(".", "-")
 
 
-def generate_throttle_map_elements(throttles):
-    logging.debug("Generate throttling map %s entries", cfg()['netfilter']['throttle']['map'])
+def generate_throttle_map_elements_cgn(throttles):
+    logging.debug("Generate throttling map %s entries", cfg()['netfilter']['throttle']['map'] + "_cgn")
     ret = []
     for throttle in throttles:
         ret.append(throttle.translated_net + " : goto " + chain_throttle(throttle.public_ip))
+    return ret
+
+
+def generate_throttle_map_elements_inet(throttles):
+    logging.debug("Generate throttling map %s entries", cfg()['netfilter']['throttle']['map'] + "_inet")
+    ret = []
+    for throttle in throttles:
         ret.append(throttle.public_ip + " : goto " + chain_throttle(throttle.public_ip))
     return ret
 
