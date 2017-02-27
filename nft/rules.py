@@ -19,7 +19,7 @@ def replace_rule(handle, rule, chain, table):
 def drop_rule(handle, chain, table):
     command = cfg()['netfilter']['nft']['call'] + " delete rule " + table + " " + chain + " handle " + str(handle)
     subprocess.call(command, shell=True)
-    logging.debug("The rule with handle %s has been added to table %s chain %s", handle, table, chain)
+    logging.debug("The rule with handle %s has been deleted from table %s chain %s", handle, table, chain)
 
 
 # This returns False, if the rule does not exist. Otherwise, the handle is returned
