@@ -5,12 +5,12 @@ from helper.config import cfg
 
 
 def chain_exists(chain_name, table):
-    command = cfg()['netfilter']['nft']['call'] + " list chains " + table + " " + str(chain_name)
+    command = cfg()['netfilter']['nft']['call'] + " list table " + table
     output = subprocess.check_output(command, shell=True)\
         .decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
     output_matched = []
     for l in output:
-        if str(chain_name) in l:
+        if "chain " + str(chain_name) in l:
             output_matched.append(l.strip())
     if len(output_matched) == 0:
         logging.debug("The chain %s is not present", str(chain_name))
