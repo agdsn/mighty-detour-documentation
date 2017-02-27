@@ -44,7 +44,8 @@ def drop_chain(chain, table):
     command = cfg()['netfilter']['nft']['call'] + " flush chain " + table + " " + chain
     logging.debug("Execute: " + command)
     subprocess.call(command, shell=True)
-    command = cfg()['netfilter']['nft']['call'] + " delete chain " + table + " " + chain
-    logging.debug("Execute: " + command)
-    subprocess.call(command, shell=True)
-    logging.debug("The chain %s in table %s has been deleted", chain, table)
+    if chain_exists(chain_name=chain, table=table):
+        command = cfg()['netfilter']['nft']['call'] + " delete chain " + table + " " + chain
+        logging.debug("Execute: " + command)
+        subprocess.call(command, shell=True)
+        logging.debug("The chain %s in table %s has been deleted", chain, table)
