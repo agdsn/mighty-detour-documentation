@@ -77,9 +77,7 @@ def initialize_nft(database):
     throttles = session.query(Throttle).all()
     forwardings = session.query(Forwarding).all()
 
-    initialize(private_net=IPv4Network(cfg()['cgn']['net']),
-               preflength=int(cfg()['netfilter']['preflength']),
-               translations=d,
+    initialize(translations=d,
                throttles=throttles,
                blacklist=cfg()['blacklist'],
                whitelist=cfg()['whitelist'],

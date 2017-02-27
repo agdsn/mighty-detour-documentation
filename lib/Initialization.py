@@ -39,12 +39,21 @@ def chain_translation_name(net):
     return "postrouting-" + str(IPv4Network(net)).replace(".", "-").replace("/", "-")
 
 
-def initialize(private_net, translations, throttles, forwardings, blacklist, whitelist, preflength=3):
+def initialize(translations, throttles, forwardings, blacklist, whitelist):
     logging.debug("Begin generating initial nft configuration")
+
+    translos = {}
+    # Preprocess translations
+    for trans in translations:
+        private_scale_net = str(IPv4Network(trans.translated_net).network_address) + "/" + cfg()['netfilter']['tree']['lowlevel']
+        if private_scale_net not in translos.keys():
+            translos[private_scale_net] = []
+        translos[private_scale_net].append("ip saddr " + str(trans.translated_net) + " snat " + str(trans.public_ip))
+
     src = "#!" + cfg()['netfilter']['nft']['call'] + "\n"
     src += "\n"
 
-    # Translation jump in configuration
+    # Translation
     src += "table " + cfg()['netfilter']['translation']['table'] + " {\n"
     src += "\n"
     src += "    chain postrouting {\n"
@@ -78,7 +87,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "    }\n"
     src += "\n"
     cidr_mask = cgn.prefixlen
-    depth = 1
+    depth = 0
     while cidr_mask <= lowlevel:
         for sub in cgn.subnets(prefixlen_diff=cidr_level_size*depth + cidr_tree_first_level):
             src += "    # Depth: " + str(depth) + "\n"
@@ -86,6 +95,9 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
             if cidr_mask + cidr_level_size <= lowlevel:
                 for s in sub.subnets(prefixlen_diff=cidr_level_size):
                     src += "        ip saddr " + str(s) + " goto " + chain_translation_name(s) + "\n"
+            elif str(s) in translos.keys():
+                for ent in translos[str(s)]:
+                    str += "        " + ent + "\n"
             src += "    }\n"
             src += "\n"
         cidr_mask += cidr_level_size
@@ -115,21 +127,6 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
         src +=  "\n"
     src += "}\n"
     src += "\n"
-
-    #if private_net.prefixlen < 12:
-    #    subnets = private_net.subnets(prefixlen_diff=12 - private_net.prefixlen)
-    #    i = 0
-    #    for sub in subnets:
-    #        src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-" + str(i) + "\n"
-    #        src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr "\
-    #               + str(sub) + " goto postrouting-level-" + str(i) + "\n"
-    #        src += create_level(sub, "postrouting-level-" + str(i), 0, translations=translations, preflength=preflength) + "\n"
-    #        i += 1
-    #else:
-    #    src += "add chain " + cfg()['netfilter']['translation']['table'] + " postrouting-level-0\n"
-    #    src += create_level(private_net, "postrouting-level-0", 0, translations=translations) + "\n"
-    #    src += "add rule " + cfg()['netfilter']['translation']['table'] + " postrouting ip saddr " + str(private_net) + " goto postrouting-level-0\n"
-    #src += "\n"
 
     # Throttling
     src += "table " + cfg()['netfilter']['throttle']['table'] + " {\n"
