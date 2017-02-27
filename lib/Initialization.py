@@ -86,7 +86,7 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     # Exception chain (aka blacklist)
     src += "    chain ratelimit_exceptions {\n"
     for b in blacklist:
-        src += "        " + str(b) + " goto ratelimit_map\n"
+        src += "        ip saddr " + str(b) + " goto ratelimit_map\n"
     src += "        accept\n"
     src += "    }\n"
     src += "\n"
