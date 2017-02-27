@@ -22,8 +22,10 @@ def chain_exists(chain_name, table):
         return True
 
 
-def add_chain(chain, table):
+def add_chain(chain, table, options=None):
     command = cfg()['netfilter']['nft']['call'] + " add chain " + table + " " + str(chain)
+    if options:
+        command += " { " + options + " } "
     subprocess.call(command, shell=True)
     logging.debug("The chain %s in table %s has been created", chain, table)
 

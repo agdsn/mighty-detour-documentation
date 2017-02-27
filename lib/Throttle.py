@@ -22,9 +22,10 @@ def generate_throttle_map_elements(throttles):
 
 def generate_throttle_chain(throttle):
     chain_name = chain_throttle(throttle.translated_net)
-    src = "add chain " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + "\n"
+    src = "add chain " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + " { policy drop; }\n"
     src += "add rule " + cfg()['netfilter']['throttle']['table'] + " " + chain_name + " limit rate " + str(throttle.speed)
     src += " kbytes/second accept\n"
+
 
 def generate_throttle(throttle):
     chain_name = chain_throttle(throttle.translated_net)
@@ -46,7 +47,7 @@ def add_throttle(throttle):
     chain_name = chain_throttle(throttle.translated_net)
     logging.info("Add throttling %s", throttle)
     if not chain_exists(chain_name=chain_name, table=cfg()['netfilter']['throttle']['table']):
-        add_chain(chain_name, cfg()['netfilter']['throttle']['table'])
+        add_chain(chain_name, cfg()['netfilter']['throttle']['table'], options="policy drop;")
         add_rule(table=cfg()['netfilter']['throttle']['table'],
                  chain=chain_name,
                  rule="limit rate " + str(throttle.speed) + " kbytes/second accept")

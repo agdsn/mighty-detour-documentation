@@ -100,7 +100,7 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     src += "\n"
 
     # Throttling
-    src += "table " + cfg()['netfilter']['throttle']['table'] + " {\n"
+    src += "table netdev " + cfg()['netfilter']['throttle']['table'] + " {\n"
     src += "    map " + cfg()['netfilter']['throttle']['map'] + " {\n"
     src += "        type ipv4_addr: verdict;\n"
     src += "        flags interval;\n"
@@ -111,6 +111,7 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     src += "\n"
     for throttle in throttles:
         src += "    chain " + chain_throttle(throttle.translated_net) + " {\n"
+        src += "        policy drop;\n"
         src += "        limit rate " + str(throttle.speed) + " kbytes/second accept\n"
         src += "    }\n"
         src += "\n"
@@ -128,7 +129,7 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     src += "\n"
     # Throttle entry chain, including the whitelist
     src += "    chain ratelimit {\n"
-    src += "        type filter hook forward priority 0;\n"
+    src += "        type filter hook ingress priority 100;\n"
     src += "        policy accept;\n"
     for w in whitelist:
         src += "        ip saddr " + str(w) + " goto ratelimit_exceptions\n"
