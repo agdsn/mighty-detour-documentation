@@ -40,14 +40,14 @@ def update_translation(net_passed, database):
 
 
 @app.task
-def update_throttle(net_passed, database):
+def update_throttle(private_net, public_ip, database):
     try:
         session = connect_db(name=database)
-        res = session.query(Throttle).filter(Throttle.translated_net == str(net_passed)).all()
+        res = session.query(Throttle).filter(Throttle.translated_net == str(private_net)).all()
 
         if len(res) == 0:
-            logging.info("Removing throttle for private net %s", net_passed)
-            drop_throttle(private_net=net_passed)
+            logging.info("Removing throttle for private net %s and public ip %s", private_net, public_ip)
+            drop_throttle(private_net=private_net, public_ip=public_ip)
         elif len(res) == 1:
             logging.info("Adding throttle for private net %s", res[0])
             add_throttle(translation=res[0])

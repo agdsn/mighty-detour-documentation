@@ -60,21 +60,21 @@ def add_throttle(throttle):
                       throttle, throttle.public_ip, cfg()['netfilter']['throttle']['map'])
 
 
-def drop_throttle(private_net):
-    chain_name = chain_throttle(private_net)
+def drop_throttle(private_net, public_ip):
+    chain_name = chain_throttle(public_ip)
     table_name = cfg()['netfilter']['throttle']['table']
     map_name = cfg()['netfilter']['throttle']['map']
     if chain_exists(chain_name=chain_name, table=table_name):
         drop_chain(chain=chain_name, table=table_name)
     else:
-        logging.debug("Throttle %s should be deleted, but the chain %s was not present in table %s!", chain_name, table_name)
-    if map_contains_element(table=table_name, map=map_name, element=throttle.translated_net):
-        delete_map_element(table=table_name, map=map_name, key=throttle.translated_net)
+        logging.debug("Throttle should be deleted, but the chain %s was not present in table %s!", chain_name, table_name)
+    if map_contains_element(table=table_name, map=map_name, element=private_net):
+        delete_map_element(table=table_name, map=map_name, key=private_net)
     else:
-        logging.debug("Throttle %s should be deleted, but the element with key %s was not present in map %s!",
-                      throttle, throttle.translated_net, map_name)
-    if map_contains_element(table=table_name, map=map_name, element=throttle.public_ip):
-        delete_map_element(table=table_name, map=map_name, key=throttle.public_ip)
+        logging.debug("Throttle should be deleted, but the element with key %s was not present in map %s!",
+                      private_net, map_name)
+    if map_contains_element(table=table_name, map=map_name, element=public_ip):
+        delete_map_element(table=table_name, map=map_name, key=public_ip)
     else:
-        logging.debug("Throttle %s should be deleted, but the element with key %s was not present in map %s!",
-                      throttle, throttle.public_ip, map_name)
+        logging.debug("Throttle should be deleted, but the element with key %s was not present in map %s!",
+                      public_ip, map_name)
