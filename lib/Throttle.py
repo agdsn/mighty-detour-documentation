@@ -29,35 +29,37 @@ def generate_throttle_map_elements_inet(throttles):
 
 
 def add_throttle(throttle):
-    chain_name = chain_throttle(throttle.translated_net)
+    chain_name = chain_throttle(throttle.public_ip)
+    table_name = "netdev " + cfg()['netfilter']['throttle']['table']
+    map = cfg()['netfilter']['throttle']['map']
     logging.info("Add throttling %s", throttle)
-    if not chain_exists(chain_name=chain_name, table=cfg()['netfilter']['throttle']['table']):
-        add_chain(chain_name, cfg()['netfilter']['throttle']['table'], options="policy drop;")
-        add_rule(table=cfg()['netfilter']['throttle']['table'],
+    if not chain_exists(chain_name=chain_name, table=table_name):
+        add_chain(chain_name, table_name, options="policy drop;")
+        add_rule(table=table_name,
                  chain=chain_name,
                  rule="limit rate " + str(throttle.speed) + " kbytes/second accept")
     else:
         logging.debug("Throttle %s should be added, but the chain %s was already present!", throttle, chain_name)
-    if not map_contains_element(table=cfg()['netfilter']['throttle']['table'],
-                            map=cfg()['netfilter']['throttle']['map'],
+    if not map_contains_element(table=table_name,
+                            map=map+"_cgn",
                             element=throttle.translated_net):
-        add_map_element(table=cfg()['netfilter']['throttle']['table'],
-                            map=cfg()['netfilter']['throttle']['map'],
+        add_map_element(table=table_name,
+                            map=map+"_cgn",
                             key=throttle.translated_net,
                             value="goto " + chain_name)
     else:
         logging.debug("Throttle %s should be added, but the element %s was already present in the map %s!",
-                      throttle, throttle.translated_net, cfg()['netfilter']['throttle']['map'])
-    if not map_contains_element(table=cfg()['netfilter']['throttle']['table'],
-                                    map=cfg()['netfilter']['throttle']['map'],
+                      throttle, throttle.translated_net, map + "_cgn")
+    if not map_contains_element(table=table_name,
+                                    map=map+"_inet",
                                     element=throttle.public_ip):
-        add_map_element(table=cfg()['netfilter']['throttle']['table'],
-                            map=cfg()['netfilter']['throttle']['map'],
+        add_map_element(table=table_name,
+                            map=map+"_inet",
                             key=throttle.public_ip,
                             value="goto " + chain_name)
     else:
         logging.debug("Throttle %s should be added, but the element %s was already present in the map %s!",
-                      throttle, throttle.public_ip, cfg()['netfilter']['throttle']['map'])
+                      throttle, throttle.public_ip, map + "_inet")
 
 
 def drop_throttle(private_net, public_ip):

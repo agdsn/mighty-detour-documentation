@@ -50,7 +50,7 @@ def update_throttle(private_net, public_ip, database):
             drop_throttle(private_net=private_net, public_ip=public_ip)
         elif len(res) == 1:
             logging.info("Adding throttle for private net %s", res[0])
-            add_throttle(translation=res[0])
+            add_throttle(throttle=res[0])
         else:
             logging.critical("Multiple throttles for the same private net found, doing nothing")
             for t in res:
