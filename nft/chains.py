@@ -33,6 +33,7 @@ def add_chain(chain, table):
 
 def chain_rulecount(chain, table):
     command = cfg()['netfilter']['nft']['call'] + " list chain " + table + " " + chain
+    logging.debug("Execute: " + command)
     output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\
         .decode("utf-8").replace("\\t", "").replace("\\n", "").splitlines()
     logging.debug("The chain %s in table %s contains %s rules", chain, table, len(output))
@@ -41,7 +42,9 @@ def chain_rulecount(chain, table):
 
 def drop_chain(chain, table):
     command = cfg()['netfilter']['nft']['call'] + " flush chain " + table + " " + chain
+    logging.debug("Execute: " + command)
     subprocess.call(command, shell=True)
     command = cfg()['netfilter']['nft']['call'] + " delete chain " + table + " " + chain
+    logging.debug("Execute: " + command)
     subprocess.call(command, shell=True)
     logging.debug("The chain %s in table %s has been deleted", chain, table)
