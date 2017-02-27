@@ -70,7 +70,8 @@ def drop_throttle(private_net, public_ip):
     table_name = "netdev " + cfg()['netfilter']['throttle']['table']
     map_name = cfg()['netfilter']['throttle']['map']
     if chain_exists(chain_name=chain_name, table=table_name):
-        drop_chain(chain=chain_name, table=table_name)
+        #drop_chain(chain=chain_name, table=table_name)
+        logging.info("The chain %s in table %s has neither been flushed nor deleted, but this should not be a problem", chain_name, table_name)
     else:
         logging.debug("Throttle should be deleted, but the chain %s was not present in table %s!", chain_name, table_name)
     if map_contains_element(table=table_name, map=map_name+"_cgn", element=private_net):

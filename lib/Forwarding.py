@@ -80,9 +80,16 @@ def drop_forwarding(forward):
 
 def drop_all_forwardings(public_ip):
     logging.debug("Dropping all forwardings for %s", public_ip)
+    table_name = cfg()['netfilter']['forwarding']['table']
     chain_name = chain_forwarding(public_ip)
-    if chain_exists(chain_name=chain_forwarding(public_ip), table=cfg()['netfilter']['forwarding']['table']):
-        drop_chain(table=cfg()['netfilter']['forwarding']['table'], chain=chain_name)
+    jump_string = "ip saddr " + str(public_ip) + " goto " + chain_name
+    if chain_exists(chain_name=chain_forwarding(public_ip), table=table_name):
+        drop_chain(table=table_name, chain=chain_name)
         logging.info("All forwardings for %s dropped", public_ip)
     else:
         logging.debug("No forwardings for %s dropped, because none existed", public_ip)
+    rule = rule_exists(chain="prerouting", table=table_name, value=jump_string)
+    if rule:
+        drop_rule(chain="prerouting", table=table_name, handle=rule)
+    else:
+        logging.debug("The jump to the forwarding chain for %s was not dropped, because it does not exist", public_ip)
