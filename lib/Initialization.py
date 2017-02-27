@@ -45,7 +45,7 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
     translos = {}
     # Preprocess translations
     for translated_net in translations.keys():
-        private_scale_net = str(translations[translated_net].network_address) + "/" + cfg()['netfilter']['tree']['lowlevel']
+        private_scale_net = translated_net.supernet(new_prefix=cfg()['netfilter']['tree']['lowlevel'])
         if private_scale_net not in translos.keys():
             translos[private_scale_net] = []
         translos[private_scale_net].append("ip saddr " + str(translated_net) + " snat to " + str(translations[translated_net]))
@@ -95,8 +95,8 @@ def initialize(translations, throttles, forwardings, blacklist, whitelist):
             if cidr_mask + cidr_level_size <= lowlevel:
                 for s in sub.subnets(prefixlen_diff=cidr_level_size):
                     src += "        ip saddr " + str(s) + " goto " + chain_translation_name(s) + "\n"
-            elif str(s) in translos.keys():
-                for ent in translos[str(s)]:
+            elif sub in translos.keys():
+                for ent in translos[sub]:
                     src += "        " + ent + "\n"
             src += "    }\n"
             src += "\n"
