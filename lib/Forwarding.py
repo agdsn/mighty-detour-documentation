@@ -30,28 +30,29 @@ def generate_forwardings(forwards):
 
 def add_forwarding(forward):
     logging.info("Create forwarding %s", forward)
+    table_name = cfg()['netfilter']['forwarding']['table']
     chain_name = chain_forwarding(forward.public_ip)
     forward_string = str(forward.protocol) + " dport " + str(forward.source_port) + " ip saddr "\
                      + str(forward.public_ip)\
                      + " dnat to " + str(forward.private_ip) + ":" + str(forward.destination_port)
     jump_string = "ip saddr " + str(forward.public_ip) + " goto " + chain_name
-    if not chain_exists(chain_name=chain_name, table=cfg()['netfilter']['forwarding']['table']):
-        add_chain(chain=chain_name, table=cfg()['netfilter']['forwarding']['table'])
+    if not chain_exists(chain_name=chain_name, table=table_name):
+        add_chain(chain=chain_name, table=table_name)
     # Add rule to jump into the private chain
-    if not rule_exists(table=cfg()['netfilter']['forwarding']['table'], chain="prerouting", value=jump_string):
-        add_rule(table=cfg()['netfilter']['forwarding']['table'], chain="prerouting", rule=jump_string)
+    if not rule_exists(table=table_name, chain="prerouting", value=jump_string):
+        add_rule(table=table_name, chain="prerouting", rule=jump_string)
     # Add rule inside the private chain
-    if rule_exists(table=cfg()['netfilter']['forwarding']['table'], chain=chain_name, value=forward_string):
+    if rule_exists(table=table_name, chain=chain_name, value=forward_string):
         logging.debug("Forwarding %s already existed", forward)
     else:
         # Verify if an similar rule already exists (same public_ip, public_port and protocol)
         generic_string = forward.protocol + " dport " + str(forward.source_port) + " ip saddr " + str(forward.public_ip)
-        handle = rule_exists(table=cfg()['netfilter']['forwarding']['table'], chain=chain_name, value=generic_string)
+        handle = rule_exists(table=table_name, chain=chain_name, value=generic_string)
         if not handle:
-            add_rule(table=cfg()['netfilter']['forwarding']['table'], chain=chain_name, rule=forward_string)
+            add_rule(table=table_name, chain=chain_name, rule=forward_string)
             logging.info("Added forwarding %s", forward)
         else:
-            replace_rule(handle=handle, rule=forward_string, chain=chain_name, table=cfg()['netfilter']['forwarding']['table'])
+            replace_rule(handle=handle, rule=forward_string, chain=chain_name, table=table_name)
             logging.info("Updated forwarding %s with previous rule handle %s", forward, handle)
 
 

@@ -66,11 +66,11 @@ def update_forwarding(public_ip, database):
         session = connect_db(name=database)
         res = session.query(Forwarding).filter(Forwarding.public_ip == str(public_ip)).all()
 
-        drop_all_forwardings(translated_net=public_ip)
+        drop_all_forwardings(public_ip=public_ip)
 
         for r in res:
             logging.info("Adding forwarding %s", r)
-            add_forwarding(translation=r)
+            add_forwarding(forward=r)
 
     except KeyError:
         logging.critical("Connection to database %s was not successfull!", database)
