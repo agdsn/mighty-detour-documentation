@@ -47,7 +47,7 @@ def update_throttle(net_passed, database):
 
         if len(res) == 0:
             logging.info("Removing throttle for private net %s", net_passed)
-            drop_throttle(translated_net=net_passed)
+            drop_throttle(private_net=net_passed)
         elif len(res) == 1:
             logging.info("Adding throttle for private net %s", res[0])
             add_throttle(translation=res[0])

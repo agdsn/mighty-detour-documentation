@@ -60,8 +60,8 @@ def add_throttle(throttle):
                       throttle, throttle.public_ip, cfg()['netfilter']['throttle']['map'])
 
 
-def drop_throttle(throttle):
-    chain_name = chain_throttle(throttle.translated_net)
+def drop_throttle(private_net):
+    chain_name = chain_throttle(private_net)
     table_name = cfg()['netfilter']['throttle']['table']
     map_name = cfg()['netfilter']['throttle']['map']
     if chain_exists(chain_name=chain_name, table=table_name):
