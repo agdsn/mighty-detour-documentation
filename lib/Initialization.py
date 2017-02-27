@@ -69,13 +69,13 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "        type ipv4_addr: verdict;\n"
     src += "        flags interval;\n"
     src += "        elements = {\n"
-    src += "            " + ','.join(generate_throttle_map_elements(throttles))
+    src += "            " + ','.join(generate_throttle_map_elements(throttles)) + "\n"
     src += "        }\n"
     src += "    }\n"
     src += "\n"
     for throttle in throttles:
         src += "    chain " + chain_throttle(throttle.translated_net) + " {\n"
-        src += "        limit rate " + str(throttle.speed) + " kbytes/second accept"
+        src += "        limit rate " + str(throttle.speed) + " kbytes/second accept\n"
         src += "    }\n"
         src += "\n"
     # Throttle decision chain
@@ -84,8 +84,6 @@ def initialize(private_net, translations, throttles, forwardings, blacklist, whi
     src += "    }\n"
     src += "\n"
     # Exception chain (aka blacklist)
-    for b in blacklist:
-        src += "add rule " + cfg()['netfilter']['throttle']['table'] + " ratelimit_exceptions ip saddr " + str(b) + " goto ratelimit_map\n"
     src += "    chain ratelimit_exceptions {\n"
     for b in blacklist:
         src += "        " + str(b) + " goto ratelimit_map\n"
