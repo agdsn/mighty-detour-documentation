@@ -21,7 +21,40 @@ With infrastructure WLAN the user no longer connects in his own private network,
 perform the NAT for him. The NAT has to be provided by the AG DSN. Another side effect
 of this is that the user no longer needs to buy a router, which leads to less wireless networks 
 interfering with out infrastructure WLAN. The goal of this project is to build a central NAT solution
-for all of our users.
+for all our users.
+
+\section{Nomenclature}\label{nomenclature}
+
+\paragraph{Network Address Translation (NAT)}
+
+Network Address Translation is the process of exchanging the address
+information of a network packet. It is often required, because there are
+not enough public IPv4 addresses for all hosts of a network. A private
+network is used for those hosts and the internal IP addresses get
+translated by a NAT gateway before the packet leaves the network. The
+gateway tracks the connection of each host in the network to the public
+network and thereby the internal host that needs to receive the related
+incoming traffic from the public network.
+
+\paragraph{Source NAT (SNAT)}
+
+The source IP address gets exchanged by the gateway, this is the normal
+NAT mode in use by consumer routers.
+
+\paragraph{Destination NAT (DNAT)}
+
+Destination NAT is required if a service localed on an internal host should be available on
+the public network. When the gateway receives traffic from the public
+network on a specific port the traffic is forwarded to the host (usually
+known as port forwarding in customer routers). So the destination
+address of a packet gets changed without the internal host creating a
+connection first.
+
+\paragraph{Classless Inter-Domain Routing (CIDR)}
+
+The term Classless Inter-Domain Routing describes an approach to optimize
+the usage of the 32 bit IPv4 address space. It is used in this document
+to describe subnets and their size.
 
 \section{Features}\label{features}
 
@@ -197,39 +230,6 @@ otherwise its not clear what the actual destination IP is and how the packet has
 	\label{Hooks.pdf}
 	\caption{netfilter hooks}  
 \end{figure}
-
-\section{Nomenclature}\label{nomenclature}
-
-\paragraph{Network Address Translation (NAT)}
-
-Network Address Translation is the process of exchanging the address
-information of a network packet. It is often required, because there are
-not enough public IPv4 addresses for all hosts of a network. A private
-network is used for those hosts and the internal IP addresses get
-translated by a NAT gateway before the packet leaves the network. The
-gateway tracks the connection of each host in the network to the public
-network and thereby the internal host that needs to receive the related
-incoming traffic from the public network.
-
-\paragraph{Source NAT (SNAT)}
-
-The source IP address gets exchanged by the gateway, this is the normal
-NAT mode in use by consumer routers.
-
-\paragraph{Destination NAT (DNAT)}
-
-Destination NAT is required if a service localed on an internal host should be available on
-the public network. When the gateway receives traffic from the public
-network on a specific port the traffic is forwarded to the host (usually
-known as port forwarding in customer routers). So the destination
-address of a packet gets changed without the internal host creating a
-connection first.
-
-\paragraph{Classless Inter-Domain Routing (CIDR)}
-
-The term Classless Inter-Domain Routing describes an approach to optimize
-the usage of the 32 bit IPv4 address space. It is used in this document
-to describe subnets and their size.
 
 \chapter{Management Component}\label{management-component}
 
