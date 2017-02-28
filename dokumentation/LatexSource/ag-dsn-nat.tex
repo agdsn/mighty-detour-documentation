@@ -9,38 +9,38 @@
 
 \section{Motivation}\label{motivation}
 
-The network connections in Dresdner residential homes currently suffers
+The network connections in Dresdner residential homes currently suffer
 from a simple but substantial problem: only IPv4 addresses are provided
-and there are only enough addresses to assign one to each student. The
-fact that everybody owns more than one IP capable device today leads to
-numerous problems: every student that uses more than one device needs to
-run his or her own router to perform NAT. This is bad in multiple ways.
-First of all, every student needs to buy a router. Second, every one of
-these routers creates an own wireless network. This leads to a number of
-networks as high as residents in a building. Each of those wireless LANs
-needs air time for beacons, since WLAN is a shared medium\cite{FastWiFi}. The
-number of channels is limited, too. One goal of the project is to allow
-centralized WLAN - currently this is not possible due to the limited
-number of IPs. Third, the performance of low-cost routers is mostly bad
-(e.g.~slow WLAN, slow NAT). A centralized approach can address these
-issues, since the hardware will be sized properly.
+by the university and there are only enough addresses to assign one to
+each student. The fact that everybody owns more than one IP capable device
+today leads to numerous problems: every student needs to run his or her own
+router to perform NAT. This is bad among several points. First of all, every student needs to buy a router. Second,
+every one of these routers creates an own wireless network. This culminates in
+number of networks as high as residents in a building. Each of those
+wireless LANs needs air time for beacons, since WLAN is a shared
+medium\cite{FastWiFi}. The number of channels is limited and they are not proper
+assigned due to lack of central configuration. One goal of
+the project is to allow centralized WLAN - currently this is not possible due
+to the limited number of IPs. Third, the performance of low-cost routers is
+mostly bad, e.g.~slow WLAN, slow NAT. A centralized approach can address most of these
+issues. This obviously allows not only multiple wireless but also mutliple wired devices per user.
 
 
 \section{Features}\label{features}
 
 \subsection{Private Networks}\label{private-networks}
 
-Every user of the network are going to have an private network (also
+Every user of the network gets an private network (also
 referred to as ``home network''). The term ``network'' refers to a VLAN
 according to IEEE 802.1Q\cite{802.1Q}. This network will be located at the router
 next to the users flat. If the user tries to connect to the network via
-LAN or WLAN inside his building, he will be placed in this network. This
-implies that all private networks are distinct only inside the building,
-not in a global context. The IPs assigned inside an private network are
+LAN or WLAN inside his building, he will be placed inside this network. This
+implies that all private networks are only distinct inside the building,
+not in a global (whole residential homes) context. The IPs assigned inside an private network are
 going to be RFC6598 addresses\cite{CGN}, in practice an /24 network out of the
-Carrier-Grade NAT (CGN) range of 100.64.0.0/10. Every private network
-will be mapped via network address translation (NAT)\cite{NAT} to an external IP
-address on the NAT gateway. Every external IP is only used by one user.
+Carrier-Grade NAT (CGN) range ()100.64.0.0/10). Every private network
+will be mapped via network address translation (NAT\cite{NAT}) to an external IP
+address on the NAT gateway. Every external IP is only in use by a single user.
 
 
 \subsection{Roaming Networks}\label{roaming-networks}
