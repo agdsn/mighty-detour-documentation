@@ -1,6 +1,7 @@
 from ipaddress import IPv4Address, IPv4Network
 import logging
 from celery import Celery
+from celery.signals import worker_ready
 
 from helper.config import cfg
 from helper.database import connect_db, define_engine
@@ -36,8 +37,6 @@ def update_translation(net_passed, database):
 
     except KeyError:
         logging.critical("Connection to database %s was not successfull!", database)
-
-
 
 
 @app.task
@@ -77,8 +76,10 @@ def update_forwarding(public_ip, database):
         logging.critical("Connection to database %s was not successfull!", database)
 
 
+@worker_ready.connect
 @app.task
-def initialize_nft(database):
+def initialize_nft():
+    database = cfg()['databases'][0]
     try:
         session = connect_db(database)
         trans = session.query(Translation).all()
