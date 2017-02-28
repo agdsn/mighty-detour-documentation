@@ -78,8 +78,8 @@ def update_forwarding(public_ip, database):
 
 @worker_ready.connect
 @app.task
-def initialize_nft():
-    database = cfg()['databases'][0]
+def initialize_nft(**kwargs):
+    database = cfg()['databases'][0]['name']
     try:
         session = connect_db(database)
         trans = session.query(Translation).all()
