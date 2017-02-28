@@ -13,7 +13,7 @@ from model.throttle import Throttle
 from model.translation import Translation
 from model.base import Base
 
-app = Celery('tasks', broker = 'pyamqp://' + cfg()['broker']['user'] + '@' + cfg()['broker']['host'] + '//')
+app = Celery(cfg()['broker']['queue'], broker = 'amqp://' + cfg()['broker']['user'] + '@' + cfg()['broker']['host'] + '//')
 
 
 @app.task
