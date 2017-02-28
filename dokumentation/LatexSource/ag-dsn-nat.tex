@@ -1,9 +1,10 @@
 \documentclass{report}
 \usepackage{url}
 \usepackage{graphicx}
+\usepackage[top=1in, bottom=1.25in, left=1.0in, right=1.0in]{geometry}
 
 \begin{document}
-
+ 
 
 \chapter{Introduction}\label{introduction}
 
@@ -142,7 +143,7 @@ can now be forwarded in a tunnel to the foreign agents IP, which is
 called care-off address. The client itself is bound to an address of a
 foreign subnet.
 
-\subsection{Pro}\label{pro}
+\paragraph{Pro}\label{pro}
 
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
@@ -162,7 +163,7 @@ foreign subnet.
   traffic is encapsulated (overhead)
 \end{itemize}
 
-\subsection{Aruba IP Mobility}\label{aruba-ip-mobility}
+\paragraph{Aruba IP Mobility}\label{aruba-ip-mobility}
 
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
@@ -398,13 +399,14 @@ traffic from the internet to internal hosts.
 After the initial NAT through nftables, or iptables a conntrack gets
 created in the connection table, containing the new source ip address.
 All following packets of the same connection get directly translated
-with the conntrack and do not pass through the nat table.
+with the conntrack and do not pass through the nat table. \\
 
 Example conntrack:
 
+
 \begin{verbatim}
-icmp 1 4 src=100.64.0.10 dst=192.168.30.0 type=8  code=0 id=7224
-src=192.168.30.0 dst=192.168.0.19 type=0 code=0 id=7224 mark=0 use=1
+         icmp 1 4 src=100.64.0.10 dst=192.168.30.0 type=8  code=0 id=7224
+         src=192.168.30.0 dst=192.168.0.19 type=0 code=0 id=7224 mark=0 use=1
 \end{verbatim}
 
 The first src, dst matches the original traffic from the internal host,
@@ -460,7 +462,7 @@ directions (for example by splitting up the ip addresses for the
 gateways).
 
 The maximal size of the connection tracking table can be adjusted with
-the variable ``net.ipv4.netfilter.ip\_conntrack\_max'' and should be
+the variable \linebreak \textit{net.ipv4.netfilter.ip\_conntrack\_max} and should be
 increased from the default value. Conntrackd also has an option where
 the maximum number of conntracks can be specified.
 
@@ -500,14 +502,16 @@ servers).
 
 \section{Gateways}\label{gateways}
 
-The general specifications for our two NAT gateways
-
-Server (Dell PowerEdge R630 Server): CPU: 2x Intel Xeon E5-2690 v4 (2,6
-GHz, 14 Cores/ 28 Threads) RAM: 2x 16GB RDIMM 2.400MT/s first NIC: Intel
-Ethernet i350 4 Ports 1GbE second NIC: 2x Solarflare Flareon Ultra
-SFN8522 10 Gigabit SFP+ harddrive: 200GB SSD Operation System: Debian
-stretch Kernel \textgreater{}= 4.8 nft: \textgreater{} 0.7 (build from
-the git repo)
+The general hardware/software specifications for our two NAT gateways (Dell PowerEdge R630 Server): \\
+\begin{description}
+\item CPU: 2x Intel Xeon E5-2690 v4 (2,6GHz, 14 Cores/28 Threads)
+\item RAM: 2x 16GB RDIMM 2.400MT/s 
+\item first NIC: Intel Ethernet i350 4 Ports 1GbE
+\item second NIC: 2x Solarflare Flareon Ultra SFN8522 10 Gigabit SFP+
+\item harddrive: 200GB SSD
+\item OS: Debian stretch, Kernel \textgreater{}= 4.8
+\item nft: \textgreater{} 0.7 (build from the git repo)
+\end{description}
 
 \chapter{Evaluation}\label{evaluation}
 
@@ -606,6 +610,8 @@ Coming soon to an email server of your choosing\ldots{}
 
 \section{keepalived.conf}\label{keepalived-1}
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
     global_defs {
         # Name of the local router
@@ -690,26 +696,32 @@ Coming soon to an email server of your choosing\ldots{}
             }
     }
 \end{verbatim}
+\endgroup
 
 \section{nping}\label{nping}
 
 \subsection{Example usage}
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 Example usage:
 nping -c 0 --tcp -p 80-1080 --interface eth1 -S 100.64.0.10 -g 5000 --rate 6000 <list of dest ips>
 
--c              -> Number of repeats, 0 is for infinity
---tcp           -> Probe mode
-port            -> destination port, or port range
---interface eth1-> the interface to use
--src            -> the source ip of the interface to use (if there are multiple)
--g              -> the src port to use
---rate 6000     -> the packets per minute
+-c                -> Number of repeats, 0 is for infinity
+--tcp             -> Probe mode
+port              -> destination port, or port range
+--interface eth1  -> the interface to use
+-src              -> the source ip of the interface to use (if there are multiple)
+-g                -> the src port to use
+--rate 6000       -> the packets per minute
 \end{verbatim}
+\endgroup
  
 \subsection{Python script}
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 import ipaddress
 from subprocess import call
@@ -727,13 +739,15 @@ SRC_IP = ipaddress.ip_address("100.64.0.10")
 call("date", shell=True)
 
 for i in range(30):
-        call("nping -c 0 --tcp --interface eth1 -S " + str(SRC_IP) + " -g " + str(5000 + i) + " --rate 6000 " + dest_ips + ">> /dev/null &", shell=True)
+        call("nping -c 0 --tcp --interface eth1 -S " + str(SRC_IP) + " -g " 
+        	+ str(5000 + i) + " --rate 6000 " + dest_ips + ">> /dev/null &", shell=True)
         SRC_IP += 256
 \end{verbatim}
+\endgroup
 
 \section{nftables}\label{nftables-1}
 
-\subsection{nftables-map}
+\subsection{map}
 
 This is a simple Map config for nftables. We wanted to use Maps for our
 solution but found that they are still to buggy to used in a live setup.
@@ -755,6 +769,8 @@ log(n) like in our other solution. The issues we had so far with maps:
   Deleting elements of the map is currently not possible.
 \end{itemize}
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 #!/usr/sbin/nft
 add chain nat postrouting { type nat hook postrouting priority 100 ;}
@@ -766,8 +782,9 @@ add element nat subnettoip { 100.64.1.0/24 : 192.168.0.20 }
 add element nat subnettoip { 100.64.2.0/24 : 192.168.0.21 }
 add element nat subnettoip { 100.64.3.0/24 : 192.168.0.22 }
 \end{verbatim}
+\endgroup
 
-\subsection{nftables-tree}
+\subsection{tree}
 
 We have up to 6000 /24 Networks that we want to specific IP addresses.
 Simply adding them all in one chain would be to slow that is why we
@@ -776,6 +793,8 @@ networks per level. In the leaf chain the actual NAT rule is defined.
 Below is the start of our tree config for nftables down to the first 2
 blocks of NAT rules. The rest of the tree is structured the same.
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 #!/usr/sbin/nft
 add table nat
@@ -808,8 +827,9 @@ add rule nat postrouting-level-0-0-0-1 ip saddr 100.64.13.0/24 snat 192.168.0.32
 add rule nat postrouting-level-0-0-0-1 ip saddr 100.64.14.0/24 snat 192.168.0.33
 add rule nat postrouting-level-0-0-0-1 ip saddr 100.64.15.0/24 snat 192.168.0.34
 \end{verbatim}
+\endgroup
 
-\subsection{HowTo nftables} 
+\subsection{HowTo} 
 
 This is a short collection of useful nftables commands we used during
 our work.
@@ -834,6 +854,8 @@ Useful to know:
 
 \end{itemize}
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 
 # Adds the table nat to nftables
@@ -903,13 +925,16 @@ nft delete rule nat prerouting handle 4
 nft add rule ip nat postrouting snat ip saddr map @subnettoip;
 
 \end{verbatim}
+\endgroup
 
 \section{iptables}
 
-\subsection{iptables-tree}\label{iptables-1}
+\subsection{tree}\label{iptables-1}
 
 This is the equivalent to the nftables tree for iptables.
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 *nat
 :PREROUTING ACCEPT
@@ -942,9 +967,12 @@ This is the equivalent to the nftables tree for iptables.
 -A postrouting-level-0-0-0-1 -s 100.64.14.0/24 -j SNAT --to 192.168.0.33
 -A postrouting-level-0-0-0-1 -s 100.64.15.0/24 -j SNAT --to 192.168.0.34
 \end{verbatim}
+\endgroup
 
 \subsection{HowTo}
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 # Show all chains of the table nat
 iptables -t nat -L
@@ -977,9 +1005,12 @@ iptables-save > dump.ruleset
 # Loads the ruleset
 iptables-restore < dump.ruleset
 \end{verbatim}
+\endgroup
 
 \subsection{conntrackd.conf}\label{conntrackd.conf}
 
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
 # Sync section to specifies how the synchronisation is done,
 # which protocol is used, etc.
@@ -1039,39 +1070,74 @@ General {
             EventIterationLimit 100
        }
 \end{verbatim}
+\endgroup
 
-\section{celery application}\label{celery-application}
+\section{Application config}\label{celery-application}
 
-
+\begingroup
+\fontsize{9pt}{9pt}\selectfont
 \begin{verbatim}
-netfilter: 
-	tree: # The cidr size of the last tree element lowlevel: 21
-\# Maximum rules on a tree level 
-jumpcount: 8 
-nft: call: `/usr/local/sbin/nft'
-tmpfile: `/tmp/rules.nft'
-forwarding: table: nat
-translation: table: nat throttle: table: filter map: throttle\_map
+netfilter:
+    tree:
+        # The cidr size of the last tree element
+        lowlevel: 21
+        # Maximum rules on a tree level
+        jumpcount: 8
+    nft:
+        call: '/usr/local/sbin/nft'
+        tmpfile: '/tmp/rules.nft'
+    forwarding:
+        table: nat
+    translation:
+        table: nat
+    throttle:
+        table: filter
+        map: throttle_map
 
-conntrack: call: `/usr/sbin/conntrack'
+conntrack:
+    call: '/usr/sbin/conntrack'
 
 # Multiple databases can be configured
-databases: - name: static host: 10.10.233.1 user: nat password: test123
-db: nat-static - name: dynamic host: 10.10.233.1 user: nat passwort:
-test123 db: nat-dynamic
+databases:
+    - name: static
+      host: 10.10.233.1
+      user: nat
+      password: test123
+      db: nat-static
+    - name: dynamic
+      host: 10.10.233.1
+      user: nat
+      passwort: test123
+      db: nat-dynamic
 
-broker: host: 10.10.233.1 user: natgateway password: test123 queue: nat
+broker:
+    host: 10.10.233.1
+    user: natgateway
+    password: test123
+    queue: nat
 
-cgn: ip: 100.64.0.1 net: 100.64.0.0/11 interface: eth4
+cgn:
+    ip: 100.64.0.1
+    net: 100.64.0.0/11
+    interface: eth4
 
-inet: interface: eth7
+inet:
+    interface: eth7
 
 # connections from/to these networks are not throttled
-whitelist: - 141.30.0.0/16 - 141.76.0.0/16
+whitelist:
+    - 141.30.0.0/16
+    - 141.76.0.0/16
 
-# these are hosts in the whitelist networks, that should not be spared
-blacklist: - 141.30.3.50 - 141.30.4.125 - 141.30.61.140 - 141.30.61.141 - 141.30.117.36
+# these are hosts in the whitelist networks, that should not ne spared
+blacklist:
+    - 141.30.3.50
+    - 141.30.4.125
+    - 141.30.61.140
+    - 141.30.61.141
+    - 141.30.117.36
 \end{verbatim}
+\endgroup
 
 
 \bibliography{sources.bib}{}
