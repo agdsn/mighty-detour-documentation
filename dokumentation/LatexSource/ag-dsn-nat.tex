@@ -10,14 +10,14 @@
 
 \section{Motivation}\label{motivation}
 
-The network connections in Dresdner residential homes currently suffer
+The network connections in the local residential homes currently suffer
 from a simple but substantial problem: only IPv4 addresses are provided
 by the university and there are only enough addresses to assign one to
 each student. The fact that everybody owns more than one IP capable device
 today leads to the need of network address translation (NAT). The situation right now is that
 every student needs to buy a small router that performs the NAT for him. This solution works
 in the current setup but interfers with our plans to provide infrastructure WLAN for our users.
-With infrastructure WLAN the user no longer connects in his own private network, meaning that his router can no longer 
+With infrastructure WLAN the user no longer connects to his own private network, meaning that his router can no longer
 perform the NAT for him. The NAT has to be provided by the AG DSN. Another side effect
 of this is that the user no longer needs to buy a router, which leads to less wireless networks 
 interfering with our infrastructure WLAN. The goal of this project is to build a central NAT solution
@@ -66,11 +66,11 @@ according to IEEE 802.1Q\cite{802.1Q}. This network will be located at the route
 next to the users flat. If the user tries to connect to the network via
 LAN or WLAN inside his building, he will be placed inside this network. This
 implies that all private networks are only distinct inside the building,
-not in a global (whole residential homes) context. The IPs assigned inside an private network are
+not in a global (whole of residential homes) context. The IPs assigned inside a private network are
 going to be RFC6598 addresses\cite{CGN}, in practice an /24 network out of the
 Carrier-Grade NAT (CGN) range ()100.64.0.0/10). Every private network
 will be mapped via network address translation (NAT\cite{NAT}) to an external IP
-address on the NAT gateway. Every external IP is only in use by a single user.
+address on the NAT gateway. Every external IP address is only in use by a single user.
 
 
 \subsection{Roaming Networks}\label{roaming-networks}
@@ -83,7 +83,7 @@ not translated to external IP addresses. As a result, no connectivity to
 addresses outside of the internal network is possible. During the
 authorization of a client in an roaming network, a rule is created on
 the NAT gateway. This rule translates connections to the assigned
-private IP to the public IP of the user. Another approach to solve these
+private IP address to the public IP address of the user. Another approach to solve these
 roaming issues is IP mobility as described in RFC3344\cite{IPMob}. It is described in the chapter IP Mobility \ref{ip-mobility}.
 
 
@@ -109,8 +109,8 @@ For failover, multiple setups are possible.
 
 \paragraph{Active - Passive}
 
-Only one gateway is active the other one is passive and becomes active
-if the other gateway fails. This setup is easy to setup but wastes
+Only one gateway is active, the other one is passive and becomes active
+if the other gateway fails. This setup is easy to set up but wastes
 resources, because one gateway is idling.
 
 \paragraph{Active - Active (Synchronous Routing)}
@@ -137,7 +137,7 @@ between multiple NAT gateways without knowledge which gateway a packet is proces
 
 NAT prevents users to use remotely initiated connections. To address
 this issue, port forwardings are configurable. In detail, the NAT
-gateway allows incoming connections to the external (``public'') IPs
+gateway allows incoming connections to the external (``public'') IP addresses
 and forward them to an configured internal host inside a private
 network. Related to port forwarding, a feature set comparable to
 publicly sold routers is available. Popular examples are TP-Link
@@ -148,7 +148,7 @@ an configurable internal IP and port.
 
 \subsection{Internal API}\label{internal-api}
 
-To setup the NAT gateway, an interface to the configuration tools already in
+To set up the NAT gateway, an interface to the configuration tools already in
 place is required. This targets the user management tool and the user
 self-service tool. In addition, the DHCP server for roaming
 networks needs to be able to perform updates on the NAT gateway. These
@@ -163,9 +163,9 @@ IP mobility\cite{IPMob}\cite{MobileIP-cisco} uses a complex setup to allow roami
 IP address from their home network. An endpoint in the home network of the
 user - called the home agent - forwards traffic for the user to his real
 point of presence in the network, the so-called foreign agent. The
-foreign agent establishes a tunnel to the home agent, using its own IP
-as a care-of address for the roaming user. All traffic for the client IP in the home network
-can now be forwarded in a tunnel to the foreign agents IP. The client
+foreign agent establishes a tunnel to the home agent, using its own IP address
+as a care-of address for the roaming user. All traffic for the client IP address in the home network
+can now be forwarded in a tunnel to the foreign agents IP address. The client
 itself is bound to an address of the subnet at his point of presence.
 
 \paragraph{Advantages}\label{pro}
@@ -198,7 +198,7 @@ solution leads to several different disadvantages:
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
 \item
-  Roaming is only available on buildings with a WLAN controller
+  Roaming is only available in buildings with a WLAN controller
 \item
   Each residental home needs a WLAN controller (costly)
 \item
@@ -220,9 +220,9 @@ machine in specific places in the network stack. The different hooks
 allow to access the network traffic in specific stages, making filtering,
 altering and analysing pretty flexible. Figure \ref{Hooks.pdf} shows an overview of the different hooks in the network stack.
 The important hooks for NAT are PREROUTING and
-POSTROUTING. For source NAT the destination IP has to be correct in order to change the source IP correclty. For destination NAT
+POSTROUTING. For source NAT the destination IP address has to be correct in order to change the source IP address correctly. For destination NAT
 it is the other way round. It must be performed before the routing,
-otherwise its not clear what the actual destination IP is and how the packet has to be routed.
+otherwise its not clear what the actual destination IP address is and how the packet has to be routed.
 
 \begin{figure}[ht]
 	\centering
@@ -248,7 +248,7 @@ can be found in the appendix at \ref{celery-application}.
 \subsection{Translations}\label{translations}
 
 Translations are used to configure NAT mappings. They contain the public
-IP and the private subnet. Private subnets do not have a fixed size.
+IP address and the private subnet. Private subnets do not have a fixed size.
 This design allows single forwarding entries for roaming users represented by
 private subnets as small as a singe host (/32). Home networks with an expected
 size of 254 hosts (/24) can be represented in these objects, too.
@@ -256,13 +256,13 @@ size of 254 hosts (/24) can be represented in these objects, too.
 \subsection{Forwardings}\label{forwardings}
 
 These objects are used for DNAT to allow incoming connections to users.
-They contain the following data: public IP, private IP, protocol, source
+They contain the following data: public IP address, private IP address, protocol, source
 port and destination port.
 
 \subsection{Throttles}\label{throttles}
 
 Throttle objects are used to describe limited connections. They contain
-the private network or host, the public IP and the limiting speed in
+the private network or host, the public IP address and the limiting speed in
 kbytes/second. Public and private addresses are both required, because
 inbound and outbound connections have to be limited. The speed limit is
 shared for inbound and outbound connections as the same queue is used.
@@ -315,7 +315,7 @@ An already present rule may be updated with the ``nft replace rule'' command.
 \section{packet filter}\label{packet-filter}
 
 Packet filter (pf)\cite{pf}\cite{pfOpenBSD} is a firewall for the BSD-Family and was
-original written for OpenBSD. Besides filtering pf it is moreover able to perform NAT
+original written for OpenBSD. Besides filtering pf is moreover able to perform NAT
 and bandwidth control. Due to time issues we did not implement a
 solution with pf, but evaluated some basic constrains. Instead of using
 OpenBSD we would recommend using FreeBSD, because OpenBSDs PF is not able to
@@ -333,7 +333,7 @@ An related project is pfSense\cite{pfsense}, a firewall distribution based on
 OpenBSD and PF. The software includes an webinterface, is actively
 maintained and has an online community. Sadly, it's not possible for us
 to use this existing project, since it does not provide an API to do
-remote configuration. This feature is panned for the 3rd release of
+remote configuration. This feature is planned for the 3rd release of
 pfSense, but the release date is unknown until further notice.
 
 
@@ -353,7 +353,7 @@ packets, the mangle table is used. Raw is for configuring exemptions to
 the connection tracking and security is used for Mandatory Access
 Control. Besides the standard tables, new tables can be added to perform
 specific tasks. Tables contain a set of chains containing multiple rules.
-Rules match traffic and than perform a specific task, like NAT or
+Rules match traffic and then perform a specific task, like NAT or
 jumping to another chain.
 
 \section{Nftables}\label{nftables}
@@ -540,12 +540,12 @@ The general hardware/software specifications for our two NAT gateways (Dell Powe
 
 To check if the NAT gateway is capable of serving all our users, we
 relied on performance/stress testing to see what the gateway is capable
-of. The first challenge there was to generate adequate network traffic
-for testing. Traffic can vary on different characteristics: used
-protocols, bandwidth, packet amount, packet length and connections.
+of. Generating adequate amounts of network traffic for testing was challenging.
+Traffic can vary on different characteristics: used protocols, bandwidth, packet amount,
+packet length and connections.
 
 A simple test with iPerf\cite{iperf} revealed that pure bandwidth had little
-to none effect on the NAT gateway. Another test with a few million
+to no effect on the NAT gateway. Another test with a few million
 packets per second showed the same. Only when we started using more
 connections (different source ip destination ip pairs), the cpu usage on
 the NAT gateway went up. This is because only the first packet of a
@@ -558,7 +558,7 @@ The problem with connections is that they can not be generated as easy as
 lots of packets or bandwidth. Mostly because there needs to be an
 response to a request that traverses the NAT gateway in the opposite
 direction. This makes techniques like IP-spoofing impractical. All
-IP addresses is use need to be configured on the corresponding machines (now is
+IP addresses in use need to be configured on the corresponding machines (now is
 a good time to increase the size of your ARP cache).
 
 \section{Setup}\label{setup-1}
@@ -572,11 +572,11 @@ NAT each gateway only needs one IP. Between the two gateways there is a
 link for state synchronization of the conntrack tables.
 
 An internal host, simulated by the ``Home Networks'' vm, sends a packet
-over one of the gateways to a internet host. After the first packet has
+over one of the gateways to an internet host. After the first packet has
 traversed the NAT rules, a conntrack is created and synchronized with the
 second gateway. The internet host receives the packet and sends a
 response via the gateway that has the corresponding ip address
-configured. The gateway than forwards the message to the internal host.
+configured. The gateway then forwards the message to the internal host.
 
 \begin{figure}[ht]
 	\centering
@@ -609,7 +609,7 @@ the appendix.
 
 The metrics we are interested in are latency, resource consumption on
 the gateway and the synchronization of conntracks. All of them together
-should help us to find bottle necks and identify problems of the
+should help us to find bottle necks and identify problems in the
 gateways.
 
 The latency is interesting because it should be as low as possible to
@@ -619,13 +619,13 @@ To measure the resource consumption we used collectl\cite{collectl}, a unix tool
 can measure various resources on a pc. We used it to measure the cpu
 utilization, network traffic and interrupts on the gateways. The polling
 interval was one second. For the synchronization of the state tables we
-used ``conntrackd -s'' and polled this statistic every one second with a
-script. An other metric we looked at was the memory consumption, but we
+used ``conntrackd -s'' and polled this statistic every second with a
+script. Another metric we looked at was the memory consumption, but we
 could not find anything interesting here, so we excluded it.
 
 \section{Results}\label{results}
 
-Coming soon to an email server of your choise\ldots{}
+Coming soon to an email server of your choice\ldots{}
 
 \chapter{Appendix}\label{appendix}
 
@@ -660,7 +660,7 @@ Coming soon to an email server of your choise\ldots{}
             global_tracking
     }
 
-    # Describes movebale IPs, sets the priority for the machine
+    # Describes moveable IPs, sets the priority for the machine
     vrrp_instance cgn_1 {
             state           BACKUP
 
@@ -771,8 +771,8 @@ for i in range(30):
 \subsection{map}
 
 This is a simple Map config for nftables. We wanted to use Maps for our
-solution but found that they are still to buggy to used in a live setup.
-We hope to utilize them in the future, since they are easier than building
+solution but found that they are still to buggy to be used in a live setup.
+We hope to utilize them in the future, since they are simpler than building
 a tree. Maps use a RBTree internally so the complexity is still
 log(n) like in our other solution. The issues we had so far with maps:
 
@@ -862,7 +862,7 @@ Useful to know:
   If you use the type ``nat'' for a hook than only the first packet of
   each connection is processed by the chain
 \item
-  For NAT there always have to be a chains with the prerouting and
+  For NAT there always have to be chains with the prerouting and
   postrouting hook. For source NAT the prerouting chain is empty but
   still needed!
 \item
@@ -871,7 +871,7 @@ Useful to know:
 \item
   If a rate limit rule gets exhausted, the next rule in the chain is
   called, or the default policy applies. If a host should be throttled,
-  all traffic that exhausts the rate limit needs to be droped.
+  all traffic that exhausts the rate limit needs to be dropped.
 
 \end{itemize}
 
@@ -920,8 +920,7 @@ nft add rule nat postrouting ip saddr 100.95.255.0/24 oif eth0 snat 141.30.233.2
 
 # Addes a rule to the input chain in the table filter. Rate limits the traffic 
 # to 10 mbytes/second and accepts the traffic. When the rate limit is exhausted 
-# the next rule is applied. If you want to throttel a host then a drop rule is 
-# needed !.
+# the next rule is applied. If you want to throttle a host then a drop rule is needed.
 nft add rule filter input limit rate 10 mbytes/second accept
 
 # Adds a new named map subnettoip to the table nat. The map projects ipv4 addresses
