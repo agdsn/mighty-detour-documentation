@@ -1,0 +1,10 @@
+	Example usage:
+	nping -c 0 --tcp -p 80-1080 --interface eth1 -S 100.64.0.10 -g 5000 --rate 6000 <list of dest ips>
+
+	-c				-> Number of repeats, 0 is for infinity
+	--tcp			-> Probe mode
+	port			-> destination port, or port range
+	--interface eth1-> the interface to use
+	-src			-> the source ip of the interface to use (if there are multiple)
+	-g				-> the src port to use
+	--rate 6000		-> the packets per minute

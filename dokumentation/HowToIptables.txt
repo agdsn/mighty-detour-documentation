@@ -1,0 +1,30 @@
+# Show all chains of the table nat
+iptables -t nat -L
+
+# Add the chain custom-chain to the table nat
+iptables -t nat -N custom-chain
+
+# Removes the chain custom-chain
+iptables -t nat -X custom-chain
+
+# Add the rule to the chain POSTROUTING in the table nat.
+# The rule jumps to the chain custom-chain if the source ip matches.
+iptables -t nat -A POSTROUTING -s 100.64.0.0/12 -j custom-chain
+
+# Removes the jump rule from the chain POSTROUTING
+iptables -t nat -D POSTROUTING -j custom-cahin
+
+# Change the source ip to 123.123.123.123
+iptables [...] -j SNAT --to-source 123.123.123.123
+
+# Uses masquerade on the source ip -> changes it to the ip of the outgoing interface
+iptables [...] -j MASQUERADE
+
+# Changes the destination ip and port to 123.123.123.123:22
+iptables [...] -j DNAT --to-destination 123.123.123.123:22
+
+# Saves the ruleset
+iptables-save > dump.ruleset
+
+# Loads the ruleset
+iptables-restore < dump.ruleset

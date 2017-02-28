@@ -1,0 +1,9 @@
+#!/usr/sbin/nft
+add chain nat postrouting { type nat hook postrouting priority 100 ;}
+add chain nat prerouting { type nat hook prerouting priority 0 ;}
+add map nat subnettoip { type ipv4_addr: ipv4_addr ; flags interval ; }
+add rule ip nat postrouting snat ip saddr map @subnettoip;
+add element nat subnettoip { 100.64.0.0/24 : 192.168.0.19 }
+add element nat subnettoip { 100.64.1.0/24 : 192.168.0.20 }
+add element nat subnettoip { 100.64.2.0/24 : 192.168.0.21 }
+add element nat subnettoip { 100.64.3.0/24 : 192.168.0.22 }

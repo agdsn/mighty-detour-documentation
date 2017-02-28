@@ -1,0 +1,172 @@
+# Adds the table nat to nftables
+nft add table nat
+
+# List the content of the table nat
+nft list table nat
+
+# List all tables in nftables
+nft list tables
+
+# Can also be used to make a backup of the ruleset
+nft list table nat > backup.ruleset
+
+# Load the ruleset backup.ruleset into nftables, see the tree config for an example config
+nft -f backup.ruleset
+
+# Deletes the table nat
+nft delete table nat
+
+# Deletes all rules in the table nat, chains are preserved
+nft flush table nat
+
+# Adds the chain prerouting to the table nat. The chain has the type nat
+# and uses the prerouting hook with priority 0. Priority 0 means the its first.
+nft add chain nat prerouting { type nat hook prerouting priority 0 \; }
+
+# Add the chain postrouting to the table nat
+nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
+
+# Deletes the chain postrouting in the table nat
+nft delete chain nat postrouting
+
+# Add a rule to the postrouting chain in the table nat. If the source ip 
+# is in the network 100.64.0.0/15 goto chain targetChain
+add rule nat postrouting ip saddr 100.64.0.0/15 goto targetChain
+
+# Adds a snat rule to the chain postrouting in the table nat. All source ips from
+# 100.95.255.0/24 of the interface eth0 get translated to 141.30.233.255
+nft add rule nat postrouting ip saddr 100.95.255.0/24 oif eth0 snat 141.30.233.255
+
+# Addes a rule to the input chain in the table filter. Ratelimits the traffic 
+# to 10 mbytes/second and accepts the traffic.
+nft add rule filter input limit rate 10 mbytes/second accept
+
+# Adds a new named map subnettoip to the table nat. The map projects ipv4 addresses
+# to ipv4 addresses. The interval flag allows you to use not just single addresses 
+# but entire networks: { 100.64.0.0/10 : 192.168.0.1 }
+nft add map nat subnettoip { type ipv4_addr: ipv4_addr\; flags interval \; }
+
+# Adds an element to the map subnettoip in the table nat.
+nft add element nat subnettoip { 100.64.1.0/24 : 141.30.202.171 }
+
+# Deletes the element 1.2.3.0/24 from the map subnettoip
+nft delete element nat subnettoip { 1.2.3.0/24 }
+
+# Lists the rule handles for the table nat
+nft list table nat -a
+
+# Deletes the rule with the handle 4
+nft delete rule nat prerouting handle 4
+
+# Adds the a snat rule to the postrouting chain in the table nat. The snat is
+# performed using the subnettoip map.
+nft add rule ip nat postrouting snat ip saddr map @subnettoip;
+
+# Entfernt ein Element aus der map subnettoip in der Tabelle nat-fixed
+delete element nat-fixed subnettoip { 1.2.3.0/24 }
+
+# Hinzufügen eines Elements aus der map subnettoip in der Tabelle nat-fixed
+add element nat-fixed subnettoip { 100.64.1.0/24 : 141.30.202.171 }
+
+#Gibt einem die Handles fuer die Regel in der Tabelle nat-fixed an
+nft list table nat-fixed -a
+
+#Entfernt die Regel mit dem entsprechenden handle aus der Tabelle nat-fixed
+nft delete rule nat-fixed prerouting handle 4
+
+#Hinzufügen der Tabelle nat zu NFTABLES
+nft add table nat
+
+#Löscht die Tabelle nat
+nft delete table nat
+
+#Löscht alle Regeln in der Tabelle nat, Chains bleiben erhalten
+nft flush table nat
+
+#Anlegen der chain prerouting in der Tabelle nat, nutzt den hook prerouting und hat den Type nat, sowie die Priorität 0 (als erstes)
+nft add chain nat prerouting { type nat hook prerouting priority 0 \; }
+
+#Eine Chain die nach dem Routing das NAT anwendet
+nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
+
+# Legt eine neue Map mit dem Namen subnettoip an, die von einem ip4 Netz auf eine ip4 Adresse mapt (kann ich auch eine Ip auf ein Netz mappen?)
+nft add map nat subnettoip { type ipv4_addr: ipv4_addr\; flags interval \; }
+
+# Hinzufügen einer Regel zum matchen einer MAP für SNAT
+add rule ip nat-fixed postrouting snat ip saddr map @subnettoip;
+
+#Jumpen in eine andere chain: Fügt der Tabelle nat, in der chain postrouting-level-0 eine Regel ein, welche wenn di ip source address 100.64.0.0/12 ist und vom interface eht0 kommt in die chain postrouting-level-1-1 springt.
+nft add rule nat postrouting-level-0 ip saddr 100.64.0.0/12 oif eth0 jump postrouting-level-1-1
+
+#Einfuegen einer snat regel
+nft add rule nat postrouting-level-3-7 ip saddr 100.95.255.0/24 oif eth0 snat 141.30.233.255
+
+# Rate limiting auf 10 mbytes die Sekunde. 
+nft add rule filter input limit rate 10 mbytes/second accept
+
+------------------------------------------------------------------------------------------------------
+#Carrier grade NAT
+100.64.0.0/10
+
+ln(6000) = 9
+log8(6000) = 5
+
+24 - 3 = 21 (8 24ger Netze)
+
+Wenn alle Ebenen 8 groß sind, dann brauchen wir 256 * 8 ^ 5 Adressen, so viele Adressen hat ein /10 nicht ...
+
+Daher wird die erste Ebene kleiner gemacht, Aufteilung für den Baum: 2 * 8 * 8 * 8 * 8
+
+24 - 4 * 3 - 1 = 11
+
+#Subnetz für die Nutzer
+1             2             8             8
+100.64.0.0/11 100.64.0.0/12 100.64.0.0/15 ...
+                            100.78.0.0/15 ...
+              100.80.0.0/12 100.80.0.0/15 ...
+                            100.94.0.0/15 ...
+
+------------------------------------------------------------------------------------------------------
+#IP Tables Anweisungen für NAT
+
+#Chains der Tabelle nat anzeigen lassen
+iptables -t nat -L
+
+#Eine neue Chain hinzufügen
+iptables -t nat -N custom-chain
+
+#Von der Chain POSTROUTING zur neuen Chain custom-chain springen
+iptables -t nat -A POSTROUTING -j custom-chain
+
+#Sprung von POSTROUTING nach custom-chain entfernen
+iptables -t nat -D POSTROUTING -j custom-cahin
+
+#Chain entfernen
+iptables -t nat -X custom-chain
+
+#Wenn eine bestimmtes Netz verwendet wird in eine Chain springen, alternativ mit "-o eth1" das Interface angeben.
+iptables -t nat -A POSTROUTING -s 192.168.0.0/16 {-o eth1} -j custom-chain
+
+# Source-NAT: Absender zu 123.123.123.213 aendern
+iptables [...] -j SNAT --to-source 123.123.123.123
+
+# Maskieren: Absender auf ausgehendes Netzwerkinterface aendern
+iptables [...] -j MASQUERADE
+
+# Destination-NAT: Empfaenger zu 123.123.123.123, Port 22 aendern
+iptables [...] -j DNAT --to-destination 123.123.123.123:22
+
+# Umleitung: Auf lokalen Port 8080 umleiten
+iptables [...] -j REDIRECT --to-ports 8080
+
+#Regeln speichern
+iptables-save > dump.ruleset
+
+#Regeln laden
+iptables-restore < dump.ruleset
+
+#Performance messungen 
+collectl -f performance.log -scn
+
+#Zeitraum auslesen
+collectl -p performanc... -scn --from 10:00-12:00
