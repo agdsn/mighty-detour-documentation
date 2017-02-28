@@ -14,18 +14,14 @@ The network connections in Dresdner residential homes currently suffer
 from a simple but substantial problem: only IPv4 addresses are provided
 by the university and there are only enough addresses to assign one to
 each student. The fact that everybody owns more than one IP capable device
-today leads to numerous problems: every student needs to run his or her own
-router to perform NAT. This is bad among several points. First of all, every student needs to buy a router. Second,
-every one of these routers creates an own wireless network. This culminates in
-number of networks as high as residents in a building. Each of those
-wireless LANs needs air time for beacons, since WLAN is a shared
-medium\cite{FastWiFi}. The number of channels is limited and they are not proper
-assigned due to lack of central configuration. One goal of
-the project is to allow centralized WLAN - currently this is not possible due
-to the limited number of IPs. Third, the performance of low-cost routers is
-mostly bad, e.g.~slow WLAN, slow NAT. A centralized approach can address most of these
-issues. This obviously allows not only multiple wireless but also mutliple wired devices per user.
-
+today leads to the need of network address translation (NAT). The situation right now is that
+every students needs to buy a small router that performs the NAT for him. This solution works
+in the current setup but interfers with our plans to provide infrastructure WLAN for our users.
+With infrastructure WLAN the user no longer connects in his own private network, meaning that his router can no longer 
+perform the NAT for him. The NAT has to be provided by the AG DSN. Another side effect
+of this is that the user no longer needs to buy a router, which leads to less wireless networks 
+interfering with out infrastructure WLAN. The goal of this project is to build a central NAT solution
+for all of our users.
 
 \section{Features}\label{features}
 
@@ -64,18 +60,17 @@ roaming issues is IP mobility as described in RFC3344\cite{IPMob}. It is describ
 Due to an agreement with the university, the network connection for
 individual users must be limited if a certain amount of traffic is
 exceeded. Instead of blocking the access to the network for those users,
-rate limiting will be performed. Even if a user is affected by rate
-limiting, it is possible to establish several connections that
-are not rate limited. The destinations to be excluded from the limiting
-are configurable.
+rate limiting will be performed by the NAT gateway. It is possible to 
+configure exceptions, for certain destinations, that are excluded from the rate limiting.
+
 
 \subsection{Failover}\label{failover}
 
-The setup should contain multiple NAT gateways to allow failover. If one
+The setup allows multiple NAT gateways to provide high availability. If one
 gateway fails, the network stays operational. To achieve failover,
-the connection state is synchronized. The tool to synchronize
-connection tracking state between multiple hosts running linux (see Setup \ref{live-setup} chapter for details) is
-conntrack-tools\cite{conntrack-tools}. Besides the connection tracking state, the availability
+the connection state needs to be synchronized. The tool to synchronize
+the connection tracking state between multiple hosts running linux (see Setup \ref{live-setup} chapter for details) is
+conntrackd\cite{conntrack-tools}. Besides the connection tracking state, the availability
 of the gateways is ensured by using keepalived\cite{keepalived}, a VRRP daemon for Linux.
 For failover, multiple setups are possible.
 
@@ -88,7 +83,7 @@ resources, because one gateway is idling.
 \paragraph{Active - Active (Synchronous Routing)}
 
 The internal hosts are split up into two sets and each gateway gets to
-perform NAT for one set. So both gateways are active but can be used as
+perform NAT for one set. So both gateways are active and can be used as
 backup for the other gateway. The load balancing in this case is static
 and can be performed with policy based routing. Both directions of a
 connection get translated by the same gateway (Synchronous Routing).
@@ -109,7 +104,7 @@ between multiple NAT gateways without knowledge which gateway a packet is proces
 
 NAT prevents users to use remotely initiated connections. To address
 this issue, port forwardings are configurable. In detail, the NAT
-box allows incoming connections to the external (``public'') IPs
+gateway allows incoming connections to the external (``public'') IPs
 and forward them to an configured internal host inside a private
 network. Related to port forwarding, a feature set comparable to
 publicly sold routers is available. Popular examples are TP-Link
@@ -125,14 +120,14 @@ place is required. This targets the user management tool and the user
 self-service tool. In addition, the DHCP server for roaming
 networks needs to be able to perform updates on the NAT gateway. These
 other parts of the infrastructure are not part of this project, but the
-interface of the gateway should be designed on their needs.
+interface of the gateway should be designed for their needs.
 
 \chapter{Basics}\label{basics}
 
 \section{IP Mobility}\label{ip-mobility}
 
-IP mobility\cite{IPMob}\cite{MobileIP-cisco} uses a complex setup to allow roaming users to retain their
-IP address in a home network. An endpoint in the home network of the
+IP mobility\cite{IPMob}\cite{MobileIP-cisco} uses a complex setup to allow roaming users to retain an
+IP address from their home network. An endpoint in the home network of the
 user - called the home agent - forwards traffic for the user to his real
 point of presence in the network, the so-called foreign agent. The
 foreign agent establishes a tunnel to the home agent, using its own IP
@@ -172,17 +167,17 @@ solution leads to several different disadvantages:
 \item
   Roaming is only available on buildings with a WLAN controller
 \item
-  Each resitental home needs a WLAN controller (costly)
+  Each residental home needs a WLAN controller (costly)
 \item
   It is unknown if the solution is technical applyable to our environment
 \item
   The whole setup is locked to the vendor Aruba
 \end{itemize}
 
-The technical issue will be investigated in the future. The reason it may not
-work in our environment due to the determination of the home agent in the network.
+The technical issues will be investigated in the future. The reason it may not
+work in our environment is due to the determination of the home agent in the network.
 According to the documentation the calculation is based on the user VLAN IP subnet \cite[p. 661]{MobileIP-Aruba}.
-To work properly, VLAN ids may not be unique in the whole network.
+To work properly in our network, VLAN ids may not be unique in the whole network.
 
 
 \section{Netfilter Hooks}\label{netfilter-hooks}
@@ -190,13 +185,11 @@ To work properly, VLAN ids may not be unique in the whole network.
 The netfilter hooks\cite{hooks} allow to tap into the network traffic on a linux
 machine in specific places in the network stack. The different hooks
 allow to access the network traffic in specific stages, making filtering,
-altering and analysing pretty flexible. Figure \ref{Hooks.pdf} shows an overview of the different hooks an how traffic flows
-through the stack. The important hooks for NAT are PREROUTING and
-POSTROUTING. For source NAT the source IP has to be changed after the
-routing, because based on the routing decision the IP has to be changed
-(for example 2 different networks you want to use NAT for). Destination NAT
-is just the opposite and requires to be performed before the routing,
-otherwise its not clear what the actual destination is and how it has to be routed.
+altering and analysing pretty flexible. Figure \ref{Hooks.pdf} shows an overview of the different hooks in the network stack.
+The important hooks for NAT are PREROUTING and
+POSTROUTING. For source NAT the destination IP has to be correct in order to change the source IP correclty. For destination NAT
+it is the other way round. It must be performed before the routing,
+otherwise its not clear what the actual destination IP is and how the packet has to be routed.
 
 \begin{figure}[ht]
 	\centering
