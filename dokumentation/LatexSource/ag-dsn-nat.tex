@@ -275,7 +275,7 @@ First, a task named initialization is possible. It is called after
 the start of the application. During the initialization, the first
 configured database is queried to generate a complete ruleset. The
 conntrack state of the NAT gateway for the configured private network range is
-dropped. NFT configuration on all relevant tables is dropped and the
+dropped. Nftables configuration on all relevant tables is dropped and the
 new state is applied. The initialization process can later be utilized
 to reset the gateway.
 
