@@ -361,7 +361,7 @@ hooks are PREROUTING, OUTPUT and POSTROUTING. To alter
 packets, the mangle table is used. Raw is for configuring exemptions to
 the connection tracking and security is used for Mandatory Access
 Control. Besides the standard tables, new tables can be added to perform
-specific tasks. Tables contain a set of chains containing multiple rules.
+specific tasks. Tables contain a set of chains containing a set of rules.
 Rules match traffic and then perform a specific task, like NAT or
 jumping to another chain.
 
@@ -510,7 +510,7 @@ routers of Ianus. This ensures availability in case that one gateway or
 one hardware router fails.
 
 All outgoing user traffic will be send to the gateways and from the
-gateways back to ianus. Through this loop setup it is very easy to not
+gateways back to Ianus. Through this loop setup it is very easy to not
 route traffic over the gateways that should not be translated (e.g.
 connections to and from our servers).
 
@@ -572,7 +572,7 @@ a good time to increase the size of your ARP cache).
 
 \section{Setup}\label{setup-1}
 
-In Figure \ref{EvaluationSetup.pdf} you can see our setup. We used one virtual machine to simulate
+In Figure \ref{EvaluationSetup.pdf} you can see our setup. We used one virtual machine (VM) to simulate
 hosts in ``The Internet'' (192.168.0.0/16) and one for our home networks
 in the Carrier-grade NAT (CGN)(100.64.0.0/12). For ``The Internet'', the
 NAT gateways have all public IP addresses configured that are used for
@@ -580,7 +580,7 @@ NAT (of course not both gateways at the same time). In the Carrier-grade
 NAT each gateway only needs one IP. Between the two gateways there is a
 link for state synchronization of the conntrack tables.
 
-An internal host, simulated by the ``Home Networks'' vm, sends a packet
+An internal host, simulated by the ``Home Networks'' VM, sends a packet
 over one of the gateways to an internet host. After the first packet has
 traversed the NAT rules, a conntrack is created and synchronized with the
 second gateway. The internet host receives the packet and sends a
