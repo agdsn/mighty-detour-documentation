@@ -4,7 +4,7 @@
 \usepackage[top=1in, bottom=1.25in, left=1.0in, right=1.0in]{geometry}
 
 \begin{document}
- 
+
 
 \chapter{Introduction}\label{introduction}
 
@@ -107,26 +107,25 @@ between multiple NAT gateways without knowledge which gateway a packet is proces
 
 \subsection{Port Forwarding}\label{port-forwarding}
 
-The NAT prevents users to use remotely initiated connections. To address
-this issue, port forwardings should be configurable. In detail, the NAT
-box should allow incoming connections to the external (``public'') IPs
+NAT prevents users to use remotely initiated connections. To address
+this issue, port forwardings are configurable. In detail, the NAT
+box allows incoming connections to the external (``public'') IPs
 and forward them to an configured internal host inside a private
 network. Related to port forwarding, a feature set comparable to
-publicly sold routers should be available. Popular examples are TP-Link
+publicly sold routers is available. Popular examples are TP-Link
 routers (e.g.~TL-WR841ND\cite{TL-WR}) and AVM routers (e.g.~Fritzbox 4020\cite{fritzbox}), which
-allow the user to configure rules. Criteria for these rules are the
+allow the user to configure forwarding rules. Criteria for these rules are the
 inbound (external) port and the protocol. The redirection is possible to
 an configurable internal IP and port.
 
 \subsection{Internal API}\label{internal-api}
 
-To setup the NAT gateway, an interface to the configuration tools in
-place is required. This interface should be accessible by two
-configuration tools that are already present: the user management tool
-and the user self-service tool. In addition, the DHCP server for roaming
+To setup the NAT gateway, an interface to the configuration tools already in
+place is required. This targets the user management tool and the user
+self-service tool. In addition, the DHCP server for roaming
 networks needs to be able to perform updates on the NAT gateway. These
 other parts of the infrastructure are not part of this project, but the
-interface of the gateway should be designed on their behalf.
+interface of the gateway should be designed on their needs.
 
 \chapter{Basics}\label{basics}
 
@@ -137,59 +136,67 @@ IP address in a home network. An endpoint in the home network of the
 user - called the home agent - forwards traffic for the user to his real
 point of presence in the network, the so-called foreign agent. The
 foreign agent establishes a tunnel to the home agent, using its own IP
-as a care-of address. All traffic for the client IP in the home network
-can now be forwarded in a tunnel to the foreign agents IP, which is
-called care-off address. The client itself is bound to an address of a
-foreign subnet.
+as a care-of address for the roaming user. All traffic for the client IP in the home network
+can now be forwarded in a tunnel to the foreign agents IP. The client
+itself is bound to an address of the subnet at his point of presence.
 
-\paragraph{Pro}\label{pro}
+\paragraph{Advantages}\label{pro}
 
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
 \item
-  No dynamical NAT configuration
+  No dynamical NAT configuration necessary
 \item
   L2 connectivity to the home network (e.g.~printers)
 \end{itemize}
 
-\subsubsection{Con}\label{con}
+\subsubsection{Disadvantages}\label{con}
 
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
 \item
-  Home- and foreign agents for every network necessary
+  Home- and foreign agents for every network necessary (costly)
 \item
   traffic is encapsulated (overhead)
 \end{itemize}
 
 \paragraph{Aruba IP Mobility}\label{aruba-ip-mobility}
 
+The wireless network equipment vendor Aruba offers a Mobile IP
+implementation for his wireless equipment \cite[p. 659]{MobileIP-Aruba}. The wireless
+controllers are used as agents. However, relying only on this commercial
+solution leads to several different disadvantages:
+
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
 \item
-  only available where centralized WLAN is available
+  Roaming is only available on buildings with a WLAN controller
 \item
-  costly
+  Each resitental home needs a WLAN controller (costly)
 \item
-  needs verification
+  It is unknown if the solution is technical applyable to our environment
 \item
-  may be in concurrent use with implementation
+  The whole setup is locked to the vendor Aruba
 \end{itemize}
+
+The technical issue will be investigated in the future. The reason it may not
+work in our environment due to the determination of the home agent in the network.
+According to the documentation the calculation is based on the user VLAN IP subnet \cite[p. 661]{MobileIP-Aruba}.
+To work properly, VLAN ids may not be unique in the whole network.
 
 
 \section{Netfilter Hooks}\label{netfilter-hooks}
 
 The netfilter hooks\cite{hooks} allow to tap into the network traffic on a linux
 machine in specific places in the network stack. The different hooks
-allow to change the network traffic in specific stages, making it
-flexible how network traffic is filtered, changed and analysed. Figure \ref{Hooks.pdf} shows an overview of the different hooks an how traffic flows
+allow to access the network traffic in specific stages, making filtering,
+altering and analysing pretty flexible. Figure \ref{Hooks.pdf} shows an overview of the different hooks an how traffic flows
 through the stack. The important hooks for NAT are PREROUTING and
 POSTROUTING. For source NAT the source IP has to be changed after the
 routing, because based on the routing decision the IP has to be changed
-(For example you have 2 different networks that you want to use NAT
-for). Destination NAT is just the opposite and requires to be performed
-before the routing, otherwise its not clear what the actual destination
-is and how it has to be routed.
+(for example 2 different networks you want to use NAT for). Destination NAT
+is just the opposite and requires to be performed before the routing,
+otherwise its not clear what the actual destination is and how it has to be routed.
 
 \begin{figure}[ht]
 	\centering
@@ -203,31 +210,33 @@ is and how it has to be routed.
 \paragraph{Network Address Translation (NAT)}
 
 Network Address Translation is the process of exchanging the address
-information of a network packet. It is often needed because there are
-not enough public ip addresses for all hosts of a network. A private
-network is used for those host and the internal ip address gets
+information of a network packet. It is often required, because there are
+not enough public IPv4 addresses for all hosts of a network. A private
+network is used for those hosts and the internal IP addresses get
 translated by a NAT gateway before the packet leaves the network. The
 gateway tracks the connection of each host in the network to the public
-network and thereby which internal host needs to receive the incoming
-traffic from the public network.
+network and thereby the internal host that needs to receive the related
+incoming traffic from the public network.
 
 \paragraph{Source NAT (SNAT)}
 
-The source ip address gets exchanged by the gateway, this is the normal
-NAT mode that is used by consumer routers.
+The source IP address gets exchanged by the gateway, this is the normal
+NAT mode in use by consumer routers.
 
 \paragraph{Destination NAT (DNAT)}
 
-Destination NAT is needed if an internal hosts should be available on
+Destination NAT is required if a service localed on an internal host should be available on
 the public network. When the gateway receives traffic from the public
-network on a specific port it forwards this traffic to the host (usually
+network on a specific port the traffic is forwarded to the host (usually
 known as port forwarding in customer routers). So the destination
 address of a packet gets changed without the internal host creating a
 connection first.
 
-\paragraph{CIDR} 
+\paragraph{Classless Inter-Domain Routing}
 
-%TODO:	Stuff
+The term Classless Inter-Domain Routing describes an approach to optimize
+the usage of the 32 bit IPv4 address space. It is used in this document
+to describe subnets and their size.
 
 \chapter{Management Component}\label{management-component}
 
@@ -504,7 +513,7 @@ servers).
 The general hardware/software specifications for our two NAT gateways (Dell PowerEdge R630 Server): \\
 \begin{description}
 \item CPU: 2x Intel Xeon E5-2690 v4 (2,6GHz, 14 Cores/28 Threads)
-\item RAM: 2x 16GB RDIMM 2.400MT/s 
+\item RAM: 2x 16GB RDIMM 2.400MT/s
 \item first NIC: Intel Ethernet i350 4 Ports 1GbE
 \item second NIC: 2x Solarflare Flareon Ultra SFN8522 10 Gigabit SFP+
 \item harddrive: 200GB SSD
@@ -716,7 +725,7 @@ port              -> destination port, or port range
 --rate 6000       -> the packets per minute
 \end{verbatim}
 \endgroup
- 
+
 \subsection{Python script}
 
 \begingroup
@@ -738,7 +747,7 @@ SRC_IP = ipaddress.ip_address("100.64.0.10")
 call("date", shell=True)
 
 for i in range(30):
-        call("nping -c 0 --tcp --interface eth1 -S " + str(SRC_IP) + " -g " 
+        call("nping -c 0 --tcp --interface eth1 -S " + str(SRC_IP) + " -g "
         	+ str(5000 + i) + " --rate 6000 " + dest_ips + ">> /dev/null &", shell=True)
         SRC_IP += 256
 \end{verbatim}
@@ -828,7 +837,7 @@ add rule nat postrouting-level-0-0-0-1 ip saddr 100.64.15.0/24 snat 192.168.0.34
 \end{verbatim}
 \endgroup
 
-\subsection{HowTo} 
+\subsection{HowTo}
 
 This is a short collection of useful nftables commands we used during
 our work.
