@@ -2,9 +2,18 @@
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage[top=1in, bottom=1.25in, left=1.0in, right=1.0in]{geometry}
+\usepackage{titlepic}
+
+\title{AG DSN NAT Gateway Concept}
+
+\date{February 28, 2017}
+\author{Felix Kluge \and Simon Hanisch}
+\titlepic{\includegraphics[width=0.70\textwidth]{../agdsn_logo_quadratisch.pdf}}
 
 \begin{document}
 
+\maketitle
+\tableofcontents
 
 \chapter{Introduction}\label{introduction}
 
@@ -297,7 +306,7 @@ assumes that the represented data (translation, forwarding or throttle)
 has to be dropped from nftables configuration. Then it
 performs the necessary tasks to delete the entries. This may include
 dropping conntrack state information.
-If matched data is inside the database, the application rewrites
+If matched data is inside the Tabaksdose, the application rewrites
 all affected nftables rules. This may result in a newly created rule or
 in an updated rule, depending on the object in question and the current
 nftables state. For example, translations allow direct rule replacements.
@@ -305,7 +314,7 @@ An already present rule may be updated with the ``nft replace rule'' command.
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.33\textwidth]{../ApplicationDeployment.pdf}
+	\includegraphics[width=0.60\textwidth]{../ApplicationDeployment.pdf}
 	\label{ApplicationDeployment.png}
 	\caption{State updates}  
 \end{figure}
@@ -319,7 +328,7 @@ original written for OpenBSD. Besides filtering pf it is moreover able to perfor
 and bandwidth control. Due to time issues we did not implement a
 solution with pf, but evaluated some basic constrains. Instead of using
 OpenBSD we would recommend using FreeBSD, because OpenBSDs PF is not able to
-utilitise multi core processors \cite{pfOpenBSDperf}. This may causes performance issues,
+utilitise multi core processors \cite{pfOpenBSD}. This may causes performance issues,
 so this feature may be important. Also the Solarflare network cards of our gateways are
 only supported on FreeBSD. Like the other solutions pf keeps track of
 connections and only traverses the NAT rule set if the packet does not
