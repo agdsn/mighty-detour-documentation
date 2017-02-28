@@ -236,11 +236,11 @@ to describe subnets and their size.
 \section{Structure}\label{structure}
 
 The management component is a python3 celery application. Celery is a
-framework to allow asynchronous task queue execution\cite{celery}. It is used
-in the project to enable management components in the network to trigger
-updates at the gateway. Updates are triggered by a rabbitmq message
-broker\cite{rabbit}. The configuration of the application can be found in the
-appendix.
+framework designed for asynchronous task queue execution\cite{celery}. It
+enables management components in the network to trigger
+configuration changes at the gateway. Updates are distributed by a rabbitmq message
+broker\cite{rabbit}. An example configuration for the management component
+can be found in the appendix at \ref{celery-application}.
 
 
 \section{Data Model}\label{data-model}
@@ -248,78 +248,76 @@ appendix.
 \subsection{Translations}\label{translations}
 
 Translations are used to configure NAT mappings. They contain the public
-IP and the private subnet. The private subnets do not have a fixed size.
-This design allows single forwarding entries for roaming users with
-private subnets as small as a singe host (/32 in CIDR notation). Home
-networks with an expected size of 254 hosts (/24 in CIDR notation) can
-be represented in these objects, too.
+IP and the private subnet. Private subnets do not have a fixed size.
+This design allows single forwarding entries for roaming users represented by
+private subnets as small as a singe host (/32). Home networks with an expected
+size of 254 hosts (/24) can be represented in these objects, too.
 
 \subsection{Forwardings}\label{forwardings}
 
 These objects are used for DNAT to allow incoming connections to users.
-They containthe following data: public IP, private IP, protocol, source
+They contain the following data: public IP, private IP, protocol, source
 port and destination port.
 
 \subsection{Throttles}\label{throttles}
 
 Throttle objects are used to describe limited connections. They contain
 the private network or host, the public IP and the limiting speed in
-kbytes/second. Public and private information are both required, because
-inbound and outbound connections need to be limited. The speed limit is
-shared for inbound and outbound connections, the same queue is used.
+kbytes/second. Public and private addresses are both required, because
+inbound and outbound connections have to be limited. The speed limit is
+shared for inbound and outbound connections as the same queue is used.
 
 \section{Program State}\label{program-state}
 
 The application supports two ways to update its configuration.
 
-At first, a task named initialization is possible. It is called after
+First, a task named initialization is possible. It is called after
 the start of the application. During the initialization, the first
 configured database is queried to generate a complete ruleset. The
-conntrack state of the NAT gateway for the configured private network is
-dropped. The NFT configuration on all relevant tables is dropped and the
+conntrack state of the NAT gateway for the configured private network range is
+dropped. NFT configuration on all relevant tables is dropped and the
 new state is applied. The initialization process can later be utilized
-to reset the gateway. This task generates a file similar to a full nft
-listing and applies it afterwards.
+to reset the gateway.
 
 Second, incremental state updates are possible. They are triggered by
-the message broker with parameters to exactly address the required
+the message broker with parameters to exactly identify the required
 change. During an update, the relevant database is queried for the data.
 The content of the change is not communicated via the message broker but
-by the database, so the broker only signals the application that an
-update needs to by applied.
+the database, so the broker only signals the application that an
+update is required.
 
 \section{State Updates}\label{state-updates}
 
-As mentioned above, the application queries the database for the
-concrete action to perform during a signalized state update. Two
+As mentioned above, the application queries the database to determinate
+which action to perform during a signalized state update. Two
 scenarios are possible: the data may or may not be present in the
-database. If there is no relevant data in the database, the application
+database.
+If there is no matched data in the database, the application
 assumes that the represented data (translation, forwarding or throttle)
-has to be dropped from the applied nftables configuration. Then it
+has to be dropped from nftables configuration. Then it
 performs the necessary tasks to delete the entries. This may include
-dropping conntrack state information. If the relevant data is present in
-the database, the application updates nftables. This may result in a
-newly created rule or in an updated rule, depending on the object in
-question and the current nftables state. For example, translations allow
-direct rule replacements. An already present rule may be updated with
-the ``nft replace rule'' command.
+dropping conntrack state information.
+If matched data is inside the database, the application rewrites
+all affected nftables rules. This may result in a newly created rule or
+in an updated rule, depending on the object in question and the current
+nftables state. For example, translations allow direct rule replacements.
+An already present rule may be updated with the ``nft replace rule'' command.
 
 \chapter{Implementation}\label{implementation}
 
 \section{packet filter}\label{packet-filter}
 
 Packet filter (pf)\cite{pf}\cite{pfOpenBSD} is a firewall for the BSD-Family and was
-original written for OpenBSD. Besides filtering pf can also perform NAT
+original written for OpenBSD. Besides filtering pf it is moreover able to perform NAT
 and bandwidth control. Due to time issues we did not implement a
-solution with pf but evaluated some basic constrains. Instead of using
-OpenBSD we would recommend using FreeBSD, because the kernel of FreeBSD
-can use a multi core processor. Most of the heavy lifting for NAT is
-done in the kernel (like the connection tracking), so this feature is
-very important. Also the Solarflare network cards of our gateways are
-only supported on FreeBSD. Like the other solution pf keeps track of
+solution with pf, but evaluated some basic constrains. Instead of using
+OpenBSD we would recommend using FreeBSD, because OpenBSDs PF is not able to
+utilitise multi core processors \cite{pfOpenBSDperf}. This may causes performance issues,
+so this feature may be important. Also the Solarflare network cards of our gateways are
+only supported on FreeBSD. Like the other solutions pf keeps track of
 connections and only traverses the NAT rule set if the packet does not
 belong to an existing connection. For redundancy pf uses pfsync\cite{pfsync},
-which allows the synchronization of state tables entries between
+which allows the synchronization of state table entries between
 multiple pf instances.
 
 \section{pfSense}\label{pfsense}
@@ -329,25 +327,25 @@ OpenBSD and PF. The software includes an webinterface, is actively
 maintained and has an online community. Sadly, it's not possible for us
 to use this existing project, since it does not provide an API to do
 remote configuration. This feature is panned for the 3er release of
-pfSense, but it is unknown when it is going to be released.
+pfSense, but the release date is unknown until further notice.
 
 
 \section{Iptables}\label{iptables}
 
-iptables\cite{iptables} is the defacto standard for network packet manipulation on
-Linux. It is a user-space application that allows the configuration of
-the packet filter ruleset in the Linux kernel. Besides filtering it can
-be used to perform NAT. There are different implementation of iptables
-for different protocols like IPv6 and ARP. Iptables is has 5 standard
+iptables\cite{iptables} is the de facto standard for network packet manipulation on
+Linux. It is a user-space application that allows configuration of
+the packet filter ruleset in the Linux kernel. Besides filtering, it can
+be used to perform NAT. There are different implementations of iptables
+for different protocols like IPv6 and ARP. Iptables has 5 standard
 tables: filter, nat, mangle, raw and security. Filter is the default
 table and is used for filtering unwanted packets, it has the INPUT,
 FORWARD and OUTPUT hooks registered. The nat table is for performing
-NAT, packets pass this table only when a new connection is created. It
-has built-in the PREROUTING, OUTPUT and POSTROUTING hooks. To alter
-packets the mangle table is used, raw is for configuring exemptions to
+NAT, packets pass this table only when a new connection is created. Its built-in
+hooks are PREROUTING, OUTPUT and POSTROUTING. To alter
+packets, the mangle table is used. Raw is for configuring exemptions to
 the connection tracking and security is used for Mandatory Access
-Control. Besides the standard tables new tables can be added to perform
-specific tasks. Tables contain a set of chains which hold the rules.
+Control. Besides the standard tables, new tables can be added to perform
+specific tasks. Tables contain a set of chains containing multiple rules.
 Rules match traffic and than perform a specific task, like NAT or
 jumping to another chain.
 
@@ -355,36 +353,36 @@ jumping to another chain.
 
 nftables\cite{nftables}\cite{nftables2}\cite{nftables3} is a new packet classification framework for Linux that aims to
 replace iptables. It was first introduced on the netfilter workshop 2008
-and got is first official release in 2009. Besides iptables it also
-wants to replace ip6tables, ebtables and arptables in one simple tool.
+and got its first official release in 2009. Besides iptables, the tools
+ip6tables, ebtables and arptables are going to be united in nftables.
 
-The motivation behind this new tool is that iptables is old and has many
+The motivation behind this new tool is the age of iptables and many
 problems like the representation of the ruleset as huge blob, which
-makes replacement of single rules not possible. The ruleset is not very
-memory efficient and can not be translated back to its rules. Another
+makes replacement of single rules impossible. The ruleset is not very
+memory efficient and can not be translated back into rules. Another
 mayor drawback is that iptables, ip6tables, ebtables and arptables share
 a large codebase but are not the same tool, which makes the code
-management inefficient. nftables also comes with an easier syntax and
+management inefficient. Nftables also comes with an easier syntax and
 allows multiple targets per rule, making rulesets less redundant. It is
 also possible to exchange single rules in a ruleset without reloading
 the entire table.
 
-nftables consists of three main components: the kernel modules, nft the
-nftables user-space application and libl the netfilter netlink library
-(communication with the kernel).
+nftables consists of three main components: the kernel modules, nft (the
+nftables user-space application) and libl the netfilter netlink library
+for communication with the kernel.
 
 The basic container in nftables is a table, it contains rules and chains
 of the same protocol family. Chains are the containers for rules and can
-be used as jump targets. A chain that registers with a netfilter hook is
+be used as jump targets. A chain with a netfilter hook is
 called a base chain and serves as entry point into a table. Rules are
-container of expressions, which define the runtime behavior and are the
-smallest unit that can be replaced. Besides these basic building blocks
-nftables allows the usage a sets and maps. They make it easy to specify
-rules without much redundancy working for the entire used set.
+container of expressions that define the runtime behavior and are the
+smallest unit that can be replaced. Besides these basic building blocks,
+nftables allows the usage of sets and maps. They make it easy to specify
+rules without much redundancy working for the entire used data structure.
 Especially maps are a useful addition for NAT, because they allow to
-directly specify NAT mappings. There are two different implementation
-for sets, as rbtree or as hashmap. nftables internally decides which one
-to use.
+directly specify NAT mappings. There are two different implementations
+for sets, rbtree or hashmap. Nftables internally decides which one its
+going to use.
 
 \section{Conntrack / Conntrackd}\label{conntrack-conntrackd}
 
@@ -397,10 +395,10 @@ connection tracking module stores information about the state of the
 connection and is vital for NAT, because it allows to match incoming
 traffic from the internet to internal hosts.
 
-After the initial NAT through nftables, or iptables a conntrack gets
+After the initial NAT through nftables or iptables, a conntrack entry gets
 created in the connection table, containing the new source ip address.
-All following packets of the same connection get directly translated
-with the conntrack and do not pass through the nat table. \\
+All following packets of the same connection are directly translated
+using the conntrack entry and do not pass through the nat table. \\
 
 Example conntrack:
 
@@ -428,78 +426,77 @@ Conntracks can have different states:
   RELATED: An expected connection, that is used for some special
   protocols like FTP. They are created by so called helpers that can
   extract information out of a connection that lets you expect another
-  connection in the future. For example the control flow for FTP is done
-  over port 20 but the data connection is done with a different port
+  connection in the future. For example, the control flow for FTP is done
+  over port 20, but the data connection is done with a different port
   that is send to the client by the server. The ftp helper extracts that
   port number and sets up an expected connection for that port, allowing
   this connection to pass the NAT gateway.
 \item
-  INVALID: The expected behavior of a connections is not followed.
+  INVALID: The connection does not follow valid network communication.
 \end{itemize}
 
-The Kernel modules uses a hash table for efficient lookups, that holds 2
-hash values for every connection: One for the original direction and one
+The Kernel module uses a hash table for efficient lookups, that holds 2
+hash values for every connection: one for the original direction and another
 for the reply direction. The hash contains all necessary information to
-match the connection like the source and destination ip address. The two
-hash values point to the conntrack which stores the state information of
-the connection. Another effect of the connection tracking is that when
-the NAT rules are changed they only get applied to new connections not
-to the old ones in the connection tracking table. To change all
-connections to the new ip address the old conntracks need to be dropped.
+match the connection like the source and destination IP address. The two
+hash values point to the conntrack that holds the state information of
+the connection. Current connections are not altered during NAT rule updates.
+Only new connections are immediatly affected by the rule changes. To change all
+connections to a new ip address the old conntrack state needs to be dropped.
 
-Besides the kernel module for conntrack and user-space tool there is the
-daemon conntrackd. The daemon allows the state table synchronization
-between different NAT gateways. Through the state synchronization it is
+Besides the kernel module for conntrack and the user-space tool, there is the
+daemon conntrackd. The daemon allows state table synchronization
+between different NAT gateways. Utilising the state synchronization, it is
 possible to setup fault tolerant NAT gateways that do not lose
 connections in the case of an failure. In our setup an extra link
-between the gateways is used to replicate the state with a low-latency.
-This should allow us to use asynchronous routing with our gateways.
-Meaning that a connection can be translated by one gateway in one
-direction and translated back by the other gateway in the other
-direction. We made tests that suggest that this setup works, but we have
-to wait for going live to see if it actually works. Should it not work
+between the gateways is used to replicate state information with a low-latency.
+This allows us to use asynchronous routing with our gateways, meaning that a
+connection can be translated by one gateway in one
+direction and translated back by the other gateway in the opposite
+direction. We performed tests that suggest that this setup works, but we have
+to wait for live tests to be sure. If it does not work,
 we have to make sure that a connection passes the same gateway in both
 directions (for example by splitting up the ip addresses for the
 gateways).
 
-The maximal size of the connection tracking table can be adjusted with
+The maximum size of the connection tracking table can be adjusted with
 the variable \linebreak \textit{net.ipv4.netfilter.ip\_conntrack\_max} and should be
-increased from the default value. Conntrackd also has an option where
-the maximum number of conntracks can be specified.
+increased from the default value. Conntrackd also has an option specifing
+the maximum number of conntracks.
 
 \section{Keepalived}\label{keepalived}
 
-Keepalived\cite{keepalived}  is a Virtual Router Redundancy Protocol (VRRP)\cite{vrrp} deamon
-for Linux. Its main goal is to provide simple loadbalancing and
+Keepalived\cite{keepalived} is a Virtual Router Redundancy Protocol (VRRP)\cite{vrrp} deamon
+for Linux. Its main goal is providing simple loadbalancing and
 high-availability for routers and servers running Linux. VRRP allows to
 configure one virtual router with an IP address using a set of hardware
 routers. The virtual IP gets assigned to a specific hardware router by
-the VRRP, making this router the VRRP master. The others routers
-function as backup routers for the master. If the master fails the VRRP
+VRRP, making this router the VRRP master. The other routers
+function as backup routers for the master. If the master fails, the VRRP
 assigns the IP to a new hardware router. This functionality allows easy
 fail over for routers and servers.
 
 In our setup both gateways are active at the same time, making it
-necessary to configure two virtual gateways with each gateway
-functioning as backup for the other one. We have added the config that
-we used for our evaluation scenario in the appendix.
+necessary to configure two virtual gateways, each gateway
+providing backup functionality for the other. We added the configuration file
+we used for our evaluation scenario in the appendix at \ref{conntrackd.conf}.
 
 
 \chapter{Setup}\label{setup}
 
 \section{Live-Setup}\label{live-setup}
 
-The central router in our network is called Ianus and is connected to
+The central router in our network is called Ianus and connects to
 our uplink. Ianus consists of two hardware routers located at different
-locations. To ensure availability one NAT gateway will be located at
-each of the locations. Each gateway will be connected to both hardware
-routers of ianus. This ensures availability in case that one gateway, or
+buildings. To ensure availability, one NAT gateway will be located at
+each of those locations. Each gateway will be connected to both hardware
+routers of Ianus. This ensures availability in case that one gateway or
 one hardware router fails.
 
 All outgoing user traffic will be send to the gateways and from the
-gateways back to ianus. Through this loop setup its very easy to not
-route traffic over the gateways that should not be translated (our
-servers).
+gateways back to ianus. Through this loop setup it is very easy to not
+route traffic over the gateways that should not be translated (e.g.
+connections to and from our servers).
 
 
 \begin{figure}[ht]
@@ -534,42 +531,42 @@ The general hardware/software specifications for our two NAT gateways (Dell Powe
 
 \section{Introduction}\label{introduction-1}
 
-To check if the NAT gateway is capable of servicing all our users we
+To check if the NAT gateway is capable of serving all our users, we
 relied on performance/stress testing to see what the gateway is capable
-of. The first challenge in this was to generate adequate network traffic
-for testing. Network traffic can vary different characteristics: used
+of. The first challenge there was to generate adequate network traffic
+for testing. Traffic can vary on different characteristics: used
 protocols, bandwidth, packet amount, packet length and connections.
 
 A simple test with iPerf\cite{iperf} revealed that pure bandwidth had little
 to none effect on the NAT gateway. Another test with a few million
 packets per second showed the same. Only when we started using more
-connections (different source ip destination ip pairs) the cpu usage on
+connections (different source ip destination ip pairs), the cpu usage on
 the NAT gateway went up. This is because only the first packet of a
-network connection traverses the NAT rules in nftables, or iptables. All
-the following packets are directly processed by the connection tracking
-system of the kernel. This is why our stress testing relies on creating
+network connection traverses the NAT rules in nftables or iptables. All
+following packets are directly processed by the connection tracking
+system of the kernel. Based on this conclusion, our stress testing relies on creating
 as many connections as possible.
 
-The problem with connections is that they are not as easy generated as
+The problem with connections is that they can not be generated as easy as
 lots of packets or bandwidth. Mostly because there needs to be an
 response to a request that traverses the NAT gateway in the opposite
-direction. This makes techniques like IP-spoofing impractical. All used
-IP addresses need to be configured on the corresponding machines (now is
+direction. This makes techniques like IP-spoofing impractical. All
+IP addresses is use need to be configured on the corresponding machines (now is
 a good time to increase the size of your ARP cache).
 
 \section{Setup}\label{setup-1}
 
 In Figure \ref{EvaluationSetup.pdf} you can see our setup. We used one virtual machine to simulate
 hosts in ``The Internet'' (192.168.0.0/16) and one for our home networks
-in the Carrier-grade NAT (CGN)(100.64.0.0/12). For ``The Internet'' the
+in the Carrier-grade NAT (CGN)(100.64.0.0/12). For ``The Internet'', the
 NAT gateways have all public IP addresses configured that are used for
 NAT (of course not both gateways at the same time). In the Carrier-grade
 NAT each gateway only needs one IP. Between the two gateways there is a
-link for the state synchronization of the conntrack tables.
+link for state synchronization of the conntrack tables.
 
 An internal host, simulated by the ``Home Networks'' vm, sends a packet
 over one of the gateways to a internet host. After the first packet has
-traversed the NAT rules a conntrack is created and synchronized with the
+traversed the NAT rules, a conntrack is created and synchronized with the
 second gateway. The internet host receives the packet and sends a
 response via the gateway that has the corresponding ip address
 configured. The gateway than forwards the message to the internal host.
@@ -583,20 +580,20 @@ configured. The gateway than forwards the message to the internal host.
 
 \section{Generating Traffic}\label{generating-traffic}
 
-After some initial testing with packet generation tools and python we
+After some initial testing with packet generation tools and python, we
 had problems generating network traffic that puts much load on the
-machines. The key to generating a good workload is to generate lots of
-different connections, meaning lots of different source ip, destination
-ip pairs. To generate them easily we found the unix tool nping\cite{nping}
-very helpful. nping is part of nmap\cite{nmap} and supports multiple target
-ips (up to 8900) and gives you a lot of control about how the packets
+machines. The key to generating good workload is to generate lots of
+different connections, meaning lots of different source IP and destination
+IP pairs. To generate them easily we found the unix tool nping\cite{nping}
+very helpful. Nping is part of nmap\cite{nmap} and supports multiple target
+IPs (up to 8900) and gives you a lot of control about how the packets
 are generated. It supports TCP, UDP and ICMP packet generation and can
 use a specified source IP address, port and interface. The payload of
 the nping packets can be specified as well. This feature set makes nping
 an excellent tool for our use case.
 
-To generate more connections we started multiple instances of nping with
-different source ip addresses. We will include the used python script in
+To generate more connections, we started multiple instances of nping with
+different source IP addresses. We will include the used python script in
 the appendix.
 
 
@@ -611,7 +608,7 @@ gateways.
 The latency is interesting because it should be as low as possible to
 not harm the hosts that are behind the NAT. We measured the latency by
 using ping\cite{ping} from the internal hosts VM to the Internet Hosts VM.
-To measure the resource consumption we collectl\cite{collectl} a unix tool that
+To measure the resource consumption we used collectl\cite{collectl}, a unix tool that
 can measure various resources on a pc. We used it to measure the cpu
 utilization, network traffic and interrupts on the gateways. The polling
 interval was one second. For the synchronization of the state tables we
@@ -621,7 +618,7 @@ could not find anything interesting here, so we excluded it.
 
 \section{Results}\label{results}
 
-Coming soon to an email server of your choosing\ldots{}
+Coming soon to an email server of your choise\ldots{}
 
 \chapter{Appendix}\label{appendix}
 
@@ -768,7 +765,7 @@ for i in range(30):
 
 This is a simple Map config for nftables. We wanted to use Maps for our
 solution but found that they are still to buggy to used in a live setup.
-We hope of using them in the future, since they are easier than building
+We hope to untilize them in the future, since they are easier than building
 a tree. Maps use a RBTree internally so the complexity is still
 log(n) like in our other solution. The issues we had so far with maps:
 
@@ -776,7 +773,7 @@ log(n) like in our other solution. The issues we had so far with maps:
 \itemsep1pt\parskip0pt\parsep0pt
 \item
   Adding new elements to a map had a memory leak (this was fixed by the
-  maintainer already)
+  maintainer)
 \item
   Very high memory consumption when updating a map entry
 \item
@@ -803,8 +800,8 @@ add element nat subnettoip { 100.64.3.0/24 : 192.168.0.22 }
 
 \subsection{tree}
 
-We have up to 6000 /24 Networks that we want to specific IP addresses.
-Simply adding them all in one chain would be to slow that is why we
+We have up to 6000 /24 Networks that we want to NAT to specific IP addresses.
+Simply adding them all in one chain would be to slow, that is why we
 created a tree of chains. Starting with 2 networks at the top and than 8
 networks per level. In the leaf chain the actual NAT rule is defined.
 Below is the start of our tree config for nftables down to the first 2
@@ -865,9 +862,9 @@ Useful to know:
   Jump returns to the calling chain after completion, goto never
   returns.
 \item
-  If a rate limit rule gets exhausted the next rule in the chain is
-  called, or the default policy applies. If a host should be throttled
-  than all traffic that exhausts the rate limit needs to be droped.
+  If a rate limit rule gets exhausted, the next rule in the chain is
+  called, or the default policy applies. If a host should be throttled,
+  all traffic that exhausts the rate limit needs to be droped.
 
 \end{itemize}
 
