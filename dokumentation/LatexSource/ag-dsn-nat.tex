@@ -225,7 +225,7 @@ known as port forwarding in customer routers). So the destination
 address of a packet gets changed without the internal host creating a
 connection first.
 
-\paragraph{Classless Inter-Domain Routing}
+\paragraph{Classless Inter-Domain Routing (CIDR)}
 
 The term Classless Inter-Domain Routing describes an approach to optimize
 the usage of the 32 bit IPv4 address space. It is used in this document
@@ -1087,6 +1087,15 @@ General {
 \endgroup
 
 \section{Application config}\label{celery-application}
+
+To launch the application, checkout the code and start an celery worker at the project root:
+\begingroup
+\begin{verbatim}
+celery -A tasks worker --loglevel=info
+\end{verbatim}
+\endgroup
+
+The configuration file dsnat.cfg:
 
 \begingroup
 \fontsize{9pt}{9pt}\selectfont
