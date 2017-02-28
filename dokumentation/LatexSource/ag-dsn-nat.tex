@@ -538,42 +538,42 @@ The general hardware/software specifications for our two NAT gateways (Dell Powe
 
 \section{Introduction}\label{introduction-1}
 
-To check if the NAT gateway is capable of servicing all our users we
+To check if the NAT gateway is capable of serving all our users, we
 relied on performance/stress testing to see what the gateway is capable
-of. The first challenge in this was to generate adequate network traffic
-for testing. Network traffic can vary different characteristics: used
+of. The first challenge there was to generate adequate network traffic
+for testing. Traffic can vary on different characteristics: used
 protocols, bandwidth, packet amount, packet length and connections.
 
 A simple test with iPerf\cite{iperf} revealed that pure bandwidth had little
 to none effect on the NAT gateway. Another test with a few million
 packets per second showed the same. Only when we started using more
-connections (different source ip destination ip pairs) the cpu usage on
+connections (different source ip destination ip pairs), the cpu usage on
 the NAT gateway went up. This is because only the first packet of a
-network connection traverses the NAT rules in nftables, or iptables. All
-the following packets are directly processed by the connection tracking
-system of the kernel. This is why our stress testing relies on creating
+network connection traverses the NAT rules in nftables or iptables. All
+following packets are directly processed by the connection tracking
+system of the kernel. Based on this conclusion, our stress testing relies on creating
 as many connections as possible.
 
-The problem with connections is that they are not as easy generated as
+The problem with connections is that they can not be generated as easy as
 lots of packets or bandwidth. Mostly because there needs to be an
 response to a request that traverses the NAT gateway in the opposite
-direction. This makes techniques like IP-spoofing impractical. All used
-IP addresses need to be configured on the corresponding machines (now is
+direction. This makes techniques like IP-spoofing impractical. All
+IP addresses is use need to be configured on the corresponding machines (now is
 a good time to increase the size of your ARP cache).
 
 \section{Setup}\label{setup-1}
 
 In Figure \ref{EvaluationSetup.pdf} you can see our setup. We used one virtual machine to simulate
 hosts in ``The Internet'' (192.168.0.0/16) and one for our home networks
-in the Carrier-grade NAT (CGN)(100.64.0.0/12). For ``The Internet'' the
+in the Carrier-grade NAT (CGN)(100.64.0.0/12). For ``The Internet'', the
 NAT gateways have all public IP addresses configured that are used for
 NAT (of course not both gateways at the same time). In the Carrier-grade
 NAT each gateway only needs one IP. Between the two gateways there is a
-link for the state synchronization of the conntrack tables.
+link for state synchronization of the conntrack tables.
 
 An internal host, simulated by the ``Home Networks'' vm, sends a packet
 over one of the gateways to a internet host. After the first packet has
-traversed the NAT rules a conntrack is created and synchronized with the
+traversed the NAT rules, a conntrack is created and synchronized with the
 second gateway. The internet host receives the packet and sends a
 response via the gateway that has the corresponding ip address
 configured. The gateway than forwards the message to the internal host.
@@ -587,20 +587,20 @@ configured. The gateway than forwards the message to the internal host.
 
 \section{Generating Traffic}\label{generating-traffic}
 
-After some initial testing with packet generation tools and python we
+After some initial testing with packet generation tools and python, we
 had problems generating network traffic that puts much load on the
-machines. The key to generating a good workload is to generate lots of
-different connections, meaning lots of different source ip, destination
-ip pairs. To generate them easily we found the unix tool nping\cite{nping}
-very helpful. nping is part of nmap\cite{nmap} and supports multiple target
-ips (up to 8900) and gives you a lot of control about how the packets
+machines. The key to generating good workload is to generate lots of
+different connections, meaning lots of different source IP and destination
+IP pairs. To generate them easily we found the unix tool nping\cite{nping}
+very helpful. Nping is part of nmap\cite{nmap} and supports multiple target
+IPs (up to 8900) and gives you a lot of control about how the packets
 are generated. It supports TCP, UDP and ICMP packet generation and can
 use a specified source IP address, port and interface. The payload of
 the nping packets can be specified as well. This feature set makes nping
 an excellent tool for our use case.
 
-To generate more connections we started multiple instances of nping with
-different source ip addresses. We will include the used python script in
+To generate more connections, we started multiple instances of nping with
+different source IP addresses. We will include the used python script in
 the appendix.
 
 
@@ -615,7 +615,7 @@ gateways.
 The latency is interesting because it should be as low as possible to
 not harm the hosts that are behind the NAT. We measured the latency by
 using ping\cite{ping} from the internal hosts VM to the Internet Hosts VM.
-To measure the resource consumption we collectl\cite{collectl} a unix tool that
+To measure the resource consumption we used collectl\cite{collectl}, a unix tool that
 can measure various resources on a pc. We used it to measure the cpu
 utilization, network traffic and interrupts on the gateways. The polling
 interval was one second. For the synchronization of the state tables we
@@ -625,7 +625,7 @@ could not find anything interesting here, so we excluded it.
 
 \section{Results}\label{results}
 
-Coming soon to an email server of your choosing\ldots{}
+Coming soon to an email server of your choise\ldots{}
 
 \chapter{Appendix}\label{appendix}
 
@@ -772,7 +772,7 @@ for i in range(30):
 
 This is a simple Map config for nftables. We wanted to use Maps for our
 solution but found that they are still to buggy to used in a live setup.
-We hope of using them in the future, since they are easier than building
+We hope to untilize them in the future, since they are easier than building
 a tree. Maps use a RBTree internally so the complexity is still
 log(n) like in our other solution. The issues we had so far with maps:
 
@@ -780,7 +780,7 @@ log(n) like in our other solution. The issues we had so far with maps:
 \itemsep1pt\parskip0pt\parsep0pt
 \item
   Adding new elements to a map had a memory leak (this was fixed by the
-  maintainer already)
+  maintainer)
 \item
   Very high memory consumption when updating a map entry
 \item
@@ -807,8 +807,8 @@ add element nat subnettoip { 100.64.3.0/24 : 192.168.0.22 }
 
 \subsection{tree}
 
-We have up to 6000 /24 Networks that we want to specific IP addresses.
-Simply adding them all in one chain would be to slow that is why we
+We have up to 6000 /24 Networks that we want to NAT to specific IP addresses.
+Simply adding them all in one chain would be to slow, that is why we
 created a tree of chains. Starting with 2 networks at the top and than 8
 networks per level. In the leaf chain the actual NAT rule is defined.
 Below is the start of our tree config for nftables down to the first 2
@@ -869,9 +869,9 @@ Useful to know:
   Jump returns to the calling chain after completion, goto never
   returns.
 \item
-  If a rate limit rule gets exhausted the next rule in the chain is
-  called, or the default policy applies. If a host should be throttled
-  than all traffic that exhausts the rate limit needs to be droped.
+  If a rate limit rule gets exhausted, the next rule in the chain is
+  called, or the default policy applies. If a host should be throttled,
+  all traffic that exhausts the rate limit needs to be droped.
 
 \end{itemize}
 
