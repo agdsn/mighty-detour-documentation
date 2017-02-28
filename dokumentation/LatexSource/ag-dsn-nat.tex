@@ -22,10 +22,10 @@
 The network connections in the local residential homes currently suffer
 from a simple but substantial problem: only IPv4 addresses are provided
 by the university and there are only enough addresses to assign one to
-each student. The fact that everybody owns more than one IP capable device
+each student. The fact that everybody owns more than one IP address capable device
 today leads to the need of network address translation (NAT). The situation right now is that
 every student needs to buy a small router that performs the NAT for him. This solution works
-in the current setup but interfers with our plans to provide infrastructure WLAN for our users.
+in the current setup but interferes with our plans to provide infrastructure WLAN for our users.
 With infrastructure WLAN the user no longer connects to his own private network, meaning that his router can no longer
 perform the NAT for him. The NAT has to be provided by the AG DSN. Another side effect
 of this is that the user no longer needs to buy a router, which leads to less wireless networks 
@@ -69,15 +69,15 @@ to describe subnets and their size.
 
 \subsection{Private Networks}\label{private-networks}
 
-Every user of the network gets an private network (also
+Every user of the network gets a private network (also
 referred to as ``home network''). The term ``network'' refers to a VLAN
 according to IEEE 802.1Q\cite{802.1Q}. This network will be located at the router
 next to the users flat. If the user tries to connect to the network via
 LAN or WLAN inside his building, he will be placed inside this network. This
-implies that all private networks are only distinct inside the building,
+implies that all entirety networks are only distinct inside the building,
 not in a global (whole of residential homes) context. The IPs assigned inside a private network are
 going to be RFC6598 addresses\cite{CGN}, in practice an /24 network out of the
-Carrier-Grade NAT (CGN) range ()100.64.0.0/10). Every private network
+Carrier-Grade NAT (CGN) range (100.64.0.0/10). Every private network
 will be mapped via network address translation (NAT\cite{NAT}) to an external IP
 address on the NAT gateway. Every external IP address is only in use by a single user.
 
@@ -85,7 +85,7 @@ address on the NAT gateway. Every external IP address is only in use by a single
 \subsection{Roaming Networks}\label{roaming-networks}
 
 All buildings get a unique network (VLAN) for roaming purposes. When a user connects to the network
-at another building (not where his flat is located), he is placed inside
+at another building, i.e. not where his flat is located, he is placed inside
 this local roaming network. These networks will contain an subnet from
 the CGN allocation. Per default, connections from roaming networks are
 not translated to external IP addresses. As a result, no connectivity to
@@ -137,7 +137,7 @@ performs the translation. This is why the connection tracking state has
 to be synchronized continuously and with a very low latency.
 Example: A request by an internal host is translated by gateway X and the response
 is translated by gateway Y. During the time the response needs to
-arrive, the connection tracking state has to be synchronized. Otherwise
+arrive, the connection tracking state has to be synchronized -- otherwise,
 the packets are rejected. This scenario allows dynamic load balancing
 between multiple NAT gateways without knowledge which gateway a packet is processed on.
 
@@ -153,7 +153,7 @@ publicly sold routers is available. Popular examples are TP-Link
 routers (e.g.~TL-WR841ND\cite{TL-WR}) and AVM routers (e.g.~Fritzbox 4020\cite{fritzbox}), which
 allow the user to configure forwarding rules. Criteria for these rules are the
 inbound (external) port and the protocol. The redirection is possible to
-an configurable internal IP and port.
+an configurable internal IP address and port.
 
 \subsection{Internal API}\label{internal-api}
 
@@ -412,7 +412,7 @@ connection and is vital for NAT, because it allows to match incoming
 traffic from the internet to internal hosts.
 
 After the initial NAT through nftables or iptables, a conntrack entry gets
-created in the connection table, containing the new source ip address.
+created in the connection table, containing the new source IP address.
 All following packets of the same connection are directly translated
 using the conntrack entry and do not pass through the nat table. \\
 
@@ -444,7 +444,7 @@ Conntracks can have different states:
   extract information out of a connection that lets you expect another
   connection in the future. For example, the control flow for FTP is done
   over port 20, but the data connection is done with a different port
-  that is send to the client by the server. The ftp helper extracts that
+  that is sent to the client by the server. The ftp helper extracts that
   port number and sets up an expected connection for that port, allowing
   this connection to pass the NAT gateway.
 \item
@@ -458,7 +458,7 @@ match the connection like the source and destination IP address. The two
 hash values point to the conntrack that holds the state information of
 the connection. Current connections are not altered during NAT rule updates.
 Only new connections are immediatly affected by the rule changes. To change all
-connections to a new ip address the old conntrack state needs to be dropped.
+connections to a new IP address the old conntrack state needs to be dropped.
 
 Besides the kernel module for conntrack and the user-space tool, there is the
 daemon conntrackd. The daemon allows state table synchronization
@@ -472,7 +472,7 @@ direction and translated back by the other gateway in the opposite
 direction. We performed tests that suggest that this setup works, but we have
 to wait for live tests to be sure. If it does not work,
 we have to make sure that a connection passes the same gateway in both
-directions (for example by splitting up the ip addresses for the
+directions (for example by splitting up the IP addresses for the
 gateways).
 
 The maximum size of the connection tracking table can be adjusted with
@@ -486,10 +486,10 @@ Keepalived\cite{keepalived} is a Virtual Router Redundancy Protocol (VRRP)\cite{
 for Linux. Its main goal is providing simple loadbalancing and
 high-availability for routers and servers running Linux. VRRP allows to
 configure one virtual router with an IP address using a set of hardware
-routers. The virtual IP gets assigned to a specific hardware router by
+routers. The virtual IP address gets assigned to a specific hardware router by
 VRRP, making this router the VRRP master. The other routers
 function as backup routers for the master. If the master fails, the VRRP
-assigns the IP to a new hardware router. This functionality allows easy
+assigns the IP address to a new hardware router. This functionality allows easy
 fail over for routers and servers.
 
 In our setup both gateways are active at the same time, making it
@@ -509,7 +509,7 @@ each of those locations. Each gateway will be connected to both hardware
 routers of Ianus. This ensures availability in case that one gateway or
 one hardware router fails.
 
-All outgoing user traffic will be send to the gateways and from the
+All outgoing user traffic will be sent to the gateways and from the
 gateways back to Ianus. Through this loop setup it is very easy to not
 route traffic over the gateways that should not be translated (e.g.
 connections to and from our servers).
@@ -556,7 +556,7 @@ packet length and connections.
 A simple test with iPerf\cite{iperf} revealed that pure bandwidth had little
 to no effect on the NAT gateway. Another test with a few million
 packets per second showed the same. Only when we started using more
-connections (different source ip destination ip pairs), the cpu usage on
+connections (different source ip address destination ip address pairs), the cpu usage on
 the NAT gateway went up. This is because only the first packet of a
 network connection traverses the NAT rules in nftables or iptables. All
 following packets are directly processed by the connection tracking
@@ -584,7 +584,7 @@ An internal host, simulated by the ``Home Networks'' VM, sends a packet
 over one of the gateways to an internet host. After the first packet has
 traversed the NAT rules, a conntrack is created and synchronized with the
 second gateway. The internet host receives the packet and sends a
-response via the gateway that has the corresponding ip address
+response via the gateway that has the corresponding IP address
 configured. The gateway then forwards the message to the internal host.
 
 \begin{figure}[ht]
@@ -742,7 +742,7 @@ nping -c 0 --tcp -p 80-1080 --interface eth1 -S 100.64.0.10 -g 5000 --rate 6000 
 --tcp             -> Probe mode
 -p 80-1080        -> destination port, or port range
 --interface eth1  -> the interface to use
--src              -> the source ip of the interface to use (if there are multiple)
+-src              -> the source ip address of the interface to use (if there are multiple)
 -g                -> the src port to use
 --rate 6000       -> the packets per minute
 \end{verbatim}
@@ -919,7 +919,7 @@ nft add chain nat postrouting { type nat hook postrouting priority 100 \; }
 # Deletes the chain postrouting in the table nat
 nft delete chain nat postrouting
 
-# Add a rule to the postrouting chain in the table nat. If the source ip 
+# Add a rule to the postrouting chain in the table nat. If the source ip address
 # is in the network 100.64.0.0/15 goto chain targetChain
 add rule nat postrouting ip saddr 100.64.0.0/15 goto targetChain
 
@@ -1013,7 +1013,7 @@ iptables -t nat -N custom-chain
 iptables -t nat -X custom-chain
 
 # Add the rule to the chain POSTROUTING in the table nat.
-# The rule jumps to the chain custom-chain if the source ip matches.
+# The rule jumps to the chain custom-chain if the source ip address matches.
 iptables -t nat -A POSTROUTING -s 100.64.0.0/12 -j custom-chain
 
 # Removes the jump rule from the chain POSTROUTING
@@ -1022,10 +1022,10 @@ iptables -t nat -D POSTROUTING -j custom-cahin
 # Change the source ip to 123.123.123.123
 iptables [...] -j SNAT --to-source 123.123.123.123
 
-# Uses masquerade on the source ip -> changes it to the ip of the outgoing interface
+# Uses masquerade on the source ip address -> changes it to the ip address of the outgoing interface
 iptables [...] -j MASQUERADE
 
-# Changes the destination ip and port to 123.123.123.123:22
+# Changes the destination ip address and port to 123.123.123.123:22
 iptables [...] -j DNAT --to-destination 123.123.123.123:22
 
 # Saves the ruleset
