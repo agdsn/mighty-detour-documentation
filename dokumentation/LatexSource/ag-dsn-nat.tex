@@ -15,12 +15,12 @@ from a simple but substantial problem: only IPv4 addresses are provided
 by the university and there are only enough addresses to assign one to
 each student. The fact that everybody owns more than one IP capable device
 today leads to the need of network address translation (NAT). The situation right now is that
-every students needs to buy a small router that performs the NAT for him. This solution works
+every student needs to buy a small router that performs the NAT for him. This solution works
 in the current setup but interfers with our plans to provide infrastructure WLAN for our users.
 With infrastructure WLAN the user no longer connects in his own private network, meaning that his router can no longer 
 perform the NAT for him. The NAT has to be provided by the AG DSN. Another side effect
 of this is that the user no longer needs to buy a router, which leads to less wireless networks 
-interfering with out infrastructure WLAN. The goal of this project is to build a central NAT solution
+interfering with our infrastructure WLAN. The goal of this project is to build a central NAT solution
 for all our users.
 
 \section{Nomenclature}\label{nomenclature}
@@ -202,9 +202,9 @@ solution leads to several different disadvantages:
 \item
   Each residental home needs a WLAN controller (costly)
 \item
-  It is unknown if the solution is technical applyable to our environment
+  It is unknown if the solution is technical applicable to our environment
 \item
-  The whole setup is locked to the vendor Aruba
+  The whole setup is locked down to Aruba
 \end{itemize}
 
 The technical issues will be investigated in the future. The reason it may not
@@ -333,7 +333,7 @@ An related project is pfSense\cite{pfsense}, a firewall distribution based on
 OpenBSD and PF. The software includes an webinterface, is actively
 maintained and has an online community. Sadly, it's not possible for us
 to use this existing project, since it does not provide an API to do
-remote configuration. This feature is panned for the 3er release of
+remote configuration. This feature is panned for the 3rd release of
 pfSense, but the release date is unknown until further notice.
 
 
@@ -772,7 +772,7 @@ for i in range(30):
 
 This is a simple Map config for nftables. We wanted to use Maps for our
 solution but found that they are still to buggy to used in a live setup.
-We hope to untilize them in the future, since they are easier than building
+We hope to utilize them in the future, since they are easier than building
 a tree. Maps use a RBTree internally so the complexity is still
 log(n) like in our other solution. The issues we had so far with maps:
 
