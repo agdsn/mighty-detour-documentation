@@ -1,5 +1,6 @@
 \documentclass{report}
 \usepackage{url}
+\usepackage{graphicx}
 
 \begin{document}
 
@@ -181,8 +182,7 @@ foreign subnet.
 The netfilter hooks\cite{hooks} allow to tap into the network traffic on a linux
 machine in specific places in the network stack. The different hooks
 allow to change the network traffic in specific stages, making it
-flexible how network traffic is filtered, changed and analysed. Figure
-\{\} shows an overview of the different hooks an how traffic flows
+flexible how network traffic is filtered, changed and analysed. Figure \ref{Hooks.pdf} shows an overview of the different hooks an how traffic flows
 through the stack. The important hooks for NAT are PREROUTING and
 POSTROUTING. For source NAT the source IP has to be changed after the
 routing, because based on the routing decision the IP has to be changed
@@ -191,6 +191,12 @@ for). Destination NAT is just the opposite and requires to be performed
 before the routing, otherwise its not clear what the actual destination
 is and how it has to be routed.
 
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\textwidth]{../Hooks.pdf}
+	\label{Hooks.pdf}
+	\caption{netfilter hooks}  
+\end{figure}
 
 \section{Nomenclature}\label{nomenclature}
 
@@ -532,7 +538,7 @@ a good time to increase the size of your ARP cache).
 
 \section{Setup}\label{setup-1}
 
-In \{\} you can see our setup. We used one virtual machine to simulate
+In Figure \ref{EvaluationSetup.pdf} you can see our setup. We used one virtual machine to simulate
 hosts in ``The Internet'' (192.168.0.0/16) and one for our home networks
 in the Carrier-grade NAT (CGN)(100.64.0.0/12). For ``The Internet'' the
 NAT gateways have all public IP addresses configured that are used for
@@ -546,6 +552,13 @@ traversed the NAT rules a conntrack is created and synchronized with the
 second gateway. The internet host receives the packet and sends a
 response via the gateway that has the corresponding ip address
 configured. The gateway than forwards the message to the internal host.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\textwidth]{../EvaluationSetup.pdf}
+	\label{EvaluationSetup.pdf}
+	\caption{Evaluation setup}  
+\end{figure}
 
 \section{Generating Traffic}\label{generating-traffic}
 
