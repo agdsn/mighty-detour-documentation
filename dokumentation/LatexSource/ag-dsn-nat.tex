@@ -499,6 +499,22 @@ gateways back to ianus. Through this loop setup its very easy to not
 route traffic over the gateways that should not be translated (our
 servers).
 
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\textwidth]{../LiveSetup.pdf}
+	\label{LiveSetup.pdf}
+	\caption{The live-setup with the connections between the gateways and Ianus}  
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=\textwidth]{../NetworkFlow.pdf}
+	\label{NetworkFlow.pdf}
+	\caption{This is the normal traffic flow for an internal host that communicates with the internet}  
+\end{figure}
+
+
 \section{Gateways}\label{gateways}
 
 The general hardware/software specifications for our two NAT gateways (Dell PowerEdge R630 Server): \\
@@ -709,7 +725,7 @@ nping -c 0 --tcp -p 80-1080 --interface eth1 -S 100.64.0.10 -g 5000 --rate 6000 
 
 -c                -> Number of repeats, 0 is for infinity
 --tcp             -> Probe mode
-port              -> destination port, or port range
+-p 80-1080        -> destination port, or port range
 --interface eth1  -> the interface to use
 -src              -> the source ip of the interface to use (if there are multiple)
 -g                -> the src port to use
