@@ -46,49 +46,48 @@ address on the NAT gateway. Every external IP is only in use by a single user.
 
 \subsection{Roaming Networks}\label{roaming-networks}
 
-All buildings get an building specific network (VLAN). A user without an
-home network in the building he connects to the network is placed inside
-the local roaming network. These networks will contain an subnet from
+All buildings get a unique network (VLAN) for roaming purposes. When a user connects to the network
+at another building (not where his flat is located), he is placed inside
+this local roaming network. These networks will contain an subnet from
 the CGN allocation. Per default, connections from roaming networks are
 not translated to external IP addresses. As a result, no connectivity to
 addresses outside of the internal network is possible. During the
 authorization of a client in an roaming network, a rule is created on
-the NAT gateways. This rule translates connections to the assigned
+the NAT gateway. This rule translates connections to the assigned
 private IP to the public IP of the user. Another approach to solve these
-roaming issues are IP mobility as described in RFC3344\cite{IPMob}. This alternative
-approach and its ups and downs are described in the next chapter.
+roaming issues is IP mobility as described in RFC3344\cite{IPMob}. It is described in the chapter IP Mobility \ref{ip-mobility}.
 
 
 
 \subsection{Rate Limiting}\label{rate-limiting}
 
-Due to an agreement with the university the network connection for
-individual users must be limited, if a certain amount of traffic is
+Due to an agreement with the university, the network connection for
+individual users must be limited if a certain amount of traffic is
 exceeded. Instead of blocking the access to the network for those users,
 rate limiting will be performed. Even if a user is affected by rate
-limiting, it should be possible to establish several connections that
+limiting, it is possible to establish several connections that
 are not rate limited. The destinations to be excluded from the limiting
-shall be configurable.
+are configurable.
 
 \subsection{Failover}\label{failover}
 
 The setup should contain multiple NAT gateways to allow failover. If one
-gateway fails, the network should stay operational. To achieve failover,
-the connection state has to be synchronized. The tool to synchronize
-connection tracking state between multiple hosts on linux are the
-conntrack-tools\cite{conntrack-tools}. Besides the connection tracking state the availability
+gateway fails, the network stays operational. To achieve failover,
+the connection state is synchronized. The tool to synchronize
+connection tracking state between multiple hosts running linux (see Setup \ref{live-setup} chapter for details) is
+conntrack-tools\cite{conntrack-tools}. Besides the connection tracking state, the availability
 of the gateways is ensured by using keepalived\cite{keepalived}, a VRRP daemon for Linux.
 For failover, multiple setups are possible.
 
 \paragraph{Active - Passive}
 
 Only one gateway is active the other one is passive and becomes active
-if the other gateway fails. This setup is easy to realize but wastes
+if the other gateway fails. This setup is easy to setup but wastes
 resources, because one gateway is idling.
 
 \paragraph{Active - Active (Synchronous Routing)}
 
-The internal hosts get split into two sets and each gateway gets to
+The internal hosts are split up into two sets and each gateway gets to
 perform NAT for one set. So both gateways are active but can be used as
 backup for the other gateway. The load balancing in this case is static
 and can be performed with policy based routing. Both directions of a
@@ -98,12 +97,12 @@ connection get translated by the same gateway (Synchronous Routing).
 
 This is the most complex setup, because it is not clear which gateway
 performs the translation. This is why the connection tracking state has
-to be synchronized continuously and with a very low latency. Example: A
-request by an internal host is translated by gateway X and the response
-is translated by gateway Y. During the time that the response needs to
-arrive the connection tracking state has to be synchronized otherwise
+to be synchronized continuously and with a very low latency.
+Example: A request by an internal host is translated by gateway X and the response
+is translated by gateway Y. During the time the response needs to
+arrive, the connection tracking state has to be synchronized. Otherwise
 the packets are rejected. This scenario allows dynamic load balancing
-without knowing to which connection a package belongs.
+between multiple NAT gateways without knowledge which gateway a packet is processed on.
 
 
 \subsection{Port Forwarding}\label{port-forwarding}
