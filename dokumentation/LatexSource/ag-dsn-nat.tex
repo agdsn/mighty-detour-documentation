@@ -635,18 +635,18 @@ could not find anything interesting here, so we excluded it.
 
 \section{Problems}
 While working on the evaluation and the traffic generation we encountered two mayor bugs: 
-When the conntrack table is full conntracks get droped, this works fine for small tables 
+when the conntrack table is full, conntracks get droped. This works fine for small tables 
 but results in stuck CPUs with bigger ones. We do not know the exact size for the conntrack
-table to trigger this bug, but it already  happend with the default size of 260 000. This bug 
-is severe because it allows to perform very easy denial of service attacks against the NAT 
-gateway. The needed bandwith and packets per second (pps) to perform this attack are below
-20 Mbit/s and 40k pps. We will submit a bug report to the netfilter project, but so far we do
+table to trigger this bug, but it already happend with the default size of 260 000. This bug 
+is critical because it allows to perform very easy denial of service attacks against the NAT 
+gateway. The required bandwith and packets per second (pps) to perform this attack are below
+20 Mbit/s and 40k pps. We will submit a bug report to the netfilter project, but right now we do
 not know how to fix this (besides using a small table, which sucks). 
 
-The second problem is the "disappearance" of the Solarflare NIC interface that receives/sends the 
-NAT traffic. The NIC interface gets unresponsive and can only be brought up again by a reboot. NICs 
-do so called flow stearing which matches connections to the correct core of the CPU to handle the traffic.
-It could be that this feature plus the high number of connections are the cause of this, but this is only
+The second problem is the "disappearance" of a Solarflare NIC interface receiving/sending
+NAT traffic. The NIC interface gets unresponsive and can only be brought up again by reboot. NICs 
+do flow stearing which matches connections to the correct core of the CPU to handle the traffic.
+It is possible that this feature plus the high number of connections are causing this, but this is only
 speculation. 
 
 \section{Results}\label{results}
