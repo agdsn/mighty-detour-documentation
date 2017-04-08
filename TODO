@@ -1,9 +1,0 @@
-High Priority:
-- use sudo instead of running as root
-
-Mid Priority:
-- rework translations to use map (if possible)
-- rework forwardings to use map (if possible)
-
-Low Priority:
-- get black- and whitelist from database

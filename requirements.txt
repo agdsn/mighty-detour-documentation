@@ -1,5 +1,0 @@
-configparser
-celery
-sqlalchemy
-psycopg2
-pyyaml
