@@ -22,7 +22,7 @@
 The network connections in the local residential homes currently suffer
 from a simple but substantial problem: only IPv4 addresses are provided
 by the university and there are only enough addresses to assign one to
-each student. Furthermore, IPv4 are non-optional since not every service provider in the internet
+each student. Furthermore, IPv4 addresses are non-optional since not every service provider in the internet
 supplies IPv6 connectivity right now. The fact that everybody owns more than one IP address capable device
 today leads to the need of network address translation (NAT). The situation right now is that
 every student needs to buy a small router that performs the NAT for him. This solution works
@@ -53,7 +53,7 @@ NAT mode in use by consumer routers \cite[SNAT - Source Network Address Translat
 
 \paragraph{Destination NAT (DNAT)}
 
-Destination NAT is required if a service localed on an internal host should be available on
+Destination NAT is required if a service located on an internal host should be available on
 the public network \cite[DNAT - Destination Network Address Translation]{SDNAT}. When the gateway receives traffic from the public
 network on a specific port the traffic is forwarded to the host (usually
 known as port forwarding in customer routers). So the destination
@@ -70,22 +70,24 @@ to describe subnets and their size.
 
 \subsection{Private Networks}\label{private-networks}
 
-Every user of the network gets a private network (also
-referred to as ``home network''). The term ``network'' refers to a VLAN
-according to IEEE 802.1Q\cite{802.1Q}. This network will be located at the router
-next to the users flat. If the user tries to connect to the network via
-LAN or WLAN inside his building, he will be placed inside this network. This
-implies that all entirety networks are only distinct inside the building,
-not in a global (whole of residential homes) context. The IPs assigned inside a private network are
-going to be RFC6598 addresses\cite{CGN}, in practice an /24 network out of the
-Carrier-Grade NAT (CGN) range (100.64.0.0/10). Every private network
-will be mapped via network address translation (NAT\cite{NAT}) to an external IP
-address on the NAT gateway. Every external IP address is only in use by a single user.
+Every user of the network gets a private network (also referred to as ``home network''). On layer 2
+this network is realized by using a VLAN according to IEEE 802.1Q\cite{802.1Q} for every user. This
+network will be located at the router next to the users flat. If the user tries to connect to the
+network via LAN or WLAN inside his building, he will be placed inside this network. Since the number
+of VLANs is limited (4096), the VLANs are only unique in a dormitory. %This implies that all
+% entirety networks are only distinct
+% inside the building,
+%not in a global (whole of residential homes) context.
+The IPs assigned inside a private network are going to be RFC6598 addresses\cite{CGN}, in practice
+an /24 network out of the Carrier-Grade NAT (CGN) range (100.64.0.0/10). Those layer 3 networks will
+be unique in the AG DSN network. Every layer 3 network will be mapped via network address
+translation (NAT\cite{NAT}) to an external IP address on the NAT gateway. Every external IP address
+is only in use by a single user.
 
 
 \subsection{Roaming Networks}\label{roaming-networks}
 
-All buildings get a unique network (VLAN) for roaming purposes. When a user connects to the network
+All buildings get a unique layer 2 network (VLAN) for roaming purposes. When a user connects to the network
 at another building, i.e. not where his flat is located, he is placed inside
 this local roaming network. These networks will contain an subnet from
 the CGN allocation. Per default, connections from roaming networks are
@@ -236,7 +238,7 @@ altering and analysing pretty flexible. Figure \ref{Hooks.pdf} shows an overview
 The important hooks for NAT are PREROUTING and
 POSTROUTING. For source NAT the destination IP address has to be correct in order to change the source IP address correctly. For destination NAT
 it is the other way round. It must be performed before the routing,
-otherwise its not clear what the actual destination IP address is and how the packet has to be routed.
+otherwise its not clear what the actual destination IP address is and where the packet has to be routed.
 
 \begin{figure}[ht]
 	\centering
@@ -311,7 +313,7 @@ assumes that the represented data (translation, forwarding or throttle)
 has to be dropped from nftables configuration. Then it
 performs the necessary tasks to delete the entries. This may include
 dropping conntrack state information.
-If matched data is inside the Tabaksdose, the application rewrites
+If matched data is inside the table, the application rewrites
 all affected nftables rules. This may result in a newly created rule or
 in an updated rule, depending on the object in question and the current
 nftables state. For example, translations allow direct rule replacements.
@@ -333,7 +335,7 @@ original written for OpenBSD. Besides filtering pf is moreover able to perform N
 and bandwidth control. Due to time issues we did not implement a
 solution with pf, but evaluated some basic constrains. Instead of using
 OpenBSD we would recommend using FreeBSD, because OpenBSDs PF is not able to
-utilitise multi core processors \cite{pfOpenBSD}. This may causes performance issues,
+utilitise multi core processors \cite{pfOpenBSD}. This may cause performance issues,
 so this feature may be important. Also the Solarflare network cards of our gateways are
 only supported on FreeBSD. Like the other solutions pf keeps track of
 connections and only traverses the NAT rule set if the packet does not
@@ -480,10 +482,10 @@ we have to make sure that a connection passes the same gateway in both
 directions (for example by splitting up the IP addresses for the
 gateways).
 
-The maximum size of the connection tracking table can be adjusted with
-the variable \linebreak \textit{net.ipv4.netfilter.ip\_conntrack\_max} and should be
-increased from the default value. Conntrackd also has an option specifing
-the maximum number of conntracks.
+%The maximum size of the connection tracking table can be adjusted with
+%the variable \linebreak \textit{net.ipv4.netfilter.ip\_conntrack\_max} and should be
+%increased from the default value. Conntrackd also has an option specifing
+%the maximum number of conntracks.
 
 \section{Keepalived}\label{keepalived}
 
@@ -538,7 +540,7 @@ routers of Ianus. This ensures availability in case that one gateway or
 one hardware router fails.
 
 All outgoing user traffic will be sent to the gateways and from the
-gateways back to Ianus. Through this loop setup it is very easy to not
+gateways back to Ianus. Through this loop setup, it is very easy to not
 route traffic over the gateways that should not be translated (e.g.
 connections to and from our servers).
 
