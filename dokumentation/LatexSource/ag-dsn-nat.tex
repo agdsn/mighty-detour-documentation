@@ -524,9 +524,25 @@ interrupts and therefore the needed overhead for context switches in the CPU.
 
 \paragraph{Flow control:} Packets are usually destined for a specific application. Modern NICs match
 traffic to the CPU core that is executing the destined application using flow control. This allows
-efficient processing of network traffic on multicore CPUs. Since the network address translation is
+efficient processing of network traffic on multi-core CPUs. Since the network address translation is
 performed by the kernel, any core can be used. This is why we disabled flow control and used static
 CPU affinities for the receive and transmit queues, removing the overhead of flow control.
+
+\section{Kernel Modules}
+
+
+
+In figure\ref{KernelModules.pdf} the required kernel modules for NAT and their dependencies are
+shown. The modules with "nf" as prefix are part of the netfilter library, the ones with "nft" are
+new kernel modules from nftables. The dependency tree shows the connection between the NAT modules
+and the conntrack module.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.75\textwidth]{../KernelModules.pdf}
+	\label{KernelModules.pdf}
+	\caption{The required kernel modules and their dependencies}  
+\end{figure}
 
 \chapter{Setup}\label{setup}
 
