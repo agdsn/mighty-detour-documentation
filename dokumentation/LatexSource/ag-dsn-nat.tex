@@ -68,17 +68,19 @@ to describe subnets and their size.
 
 \section{Features}\label{features}
 
+This section describes the different goals we're trying to achieve by the project.
+
 \subsection{Private Networks}\label{private-networks}
 
 Every user of the network gets a private network (also referred to as ``home network''). On layer 2
-this network is realized by using a VLAN according to IEEE 802.1Q\cite{802.1Q} for every user. This
+this network is realized by using a VLAN according to IEEE 802.1Q \cite{802.1Q} for every user. This
 network will be located at the router next to the users flat. If the user tries to connect to the
 network via LAN or WLAN inside his building, he will be placed inside this network. Since the number
 of VLANs is limited (4096), the VLANs are only unique in a dormitory. %This implies that all
 % entirety networks are only distinct
 % inside the building,
 %not in a global (whole of residential homes) context.
-The IPs assigned inside a private network are going to be RFC6598 addresses\cite{CGN}, in practice
+The IPs assigned inside a private network are going to be RFC6598 addresses \cite{CGN}, in practice
 an /24 network out of the Carrier-Grade NAT (CGN) range (100.64.0.0/10). Those layer 3 networks will
 be unique in the AG DSN network. Every layer 3 network will be mapped via network address
 translation (NAT\cite{NAT}) to an external IP address on the NAT gateway. Every external IP address
