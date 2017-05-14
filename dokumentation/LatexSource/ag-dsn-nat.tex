@@ -68,17 +68,19 @@ to describe subnets and their size.
 
 \section{Features}\label{features}
 
+This section describes the different goals we're trying to achieve by the project.
+
 \subsection{Private Networks}\label{private-networks}
 
 Every user of the network gets a private network (also referred to as ``home network''). On layer 2
-this network is realized by using a VLAN according to IEEE 802.1Q\cite{802.1Q} for every user. This
+this network is realized by using a VLAN according to IEEE 802.1Q \cite{802.1Q} for every user. This
 network will be located at the router next to the users flat. If the user tries to connect to the
 network via LAN or WLAN inside his building, he will be placed inside this network. Since the number
 of VLANs is limited (4096), the VLANs are only unique in a dormitory. %This implies that all
 % entirety networks are only distinct
 % inside the building,
 %not in a global (whole of residential homes) context.
-The IPs assigned inside a private network are going to be RFC6598 addresses\cite{CGN}, in practice
+The IPs assigned inside a private network are going to be RFC6598 addresses \cite{CGN}, in practice
 an /24 network out of the Carrier-Grade NAT (CGN) range (100.64.0.0/10). Those layer 3 networks will
 be unique in the AG DSN network. Every layer 3 network will be mapped via network address
 translation (NAT\cite{NAT}) to an external IP address on the NAT gateway. Every external IP address
@@ -669,8 +671,8 @@ gateways.
 
 The latency is interesting because it should be as low as possible to
 not harm the hosts that are behind the NAT. We measured the latency by
-using ping\cite{ping} from the internal hosts VM to the Internet Hosts VM.
-To measure the resource consumption we used collectl\cite{collectl}, a unix tool that
+using ping \cite{ping} from the internal hosts VM to the Internet Hosts VM.
+To measure the resource consumption we used collectl \cite{collectl}, a unix tool that
 can measure various resources on a pc. We used it to measure the cpu
 utilization, network traffic and interrupts on the gateways. The polling
 interval was one second. For the synchronization of the state tables we
@@ -695,14 +697,26 @@ do flow stearing which matches connections to the correct core of the CPU to han
 It is possible that this feature plus the high number of connections are causing this, but this is only
 speculation. 
 
-\section{Results}\label{results}
+\section{Solutions}\label{solutions}
+Fortunately, we were able to work around these two problems.
+The first issue is addressed by simply limiting the number of connections a client address block can open.
+Sadly, nftables is not capable of performing such an operation (yet). Using the iptables-compat toolset - which is intended
+to simplify the migration from iptables to nftables tooling - we are able to setup an limiting rule.
+This is possible since the iptables-nftables-compat use the nf\_tables kernel subsystem \cite{iptables_compat}.
+The following statement resolves the problem:
+\begin{verbatim}
+iptables-compat -t filter -A FORWARD -m conntrack --ctstate NEW -m connlimit --connlimit-above 100 --connlimit-saddr -j DROP
+\end{verbatim}
+Obviously this is a rule appliced to the filter-table. It sets the connection limit for each source group
+(for each private network).
 
-Coming soon to an email server of your choice\ldots{}
+Our secondary problem was resolved by just updating the firmware of the NIC. We were not able to determinate the exact
+cause for the misbehavior, since the changelog of the manufacturer does not contain any related information.
 
 
 \chapter*{Acknowledgement}
 
-We would like to thank Richard Moerbitz and Sebastian Schrader for their great help during this project.
+We would like to thank Richard Moerbitz and Sebastian Schrader for their great support during this project.
 
 \chapter{Appendix}\label{appendix}
 
