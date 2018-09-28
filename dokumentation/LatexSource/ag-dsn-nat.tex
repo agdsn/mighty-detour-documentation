@@ -127,15 +127,15 @@ Only one gateway is active, the other one is passive and becomes active
 if the other gateway fails. This setup is easy to set up but wastes
 resources, because one gateway is idling.
 
-\paragraph{Active - Active (Synchronous Routing)}
+\paragraph{Active - Active (Symmetric Routing)}
 
 The internal hosts are split up into two sets and each gateway gets to
 perform NAT for one set. So both gateways are active and can be used as
 backup for the other gateway. The load balancing in this case is static
 and can be performed with policy based routing. Both directions of a
-connection get translated by the same gateway (Synchronous Routing).
+connection get translated by the same gateway (Symmetric Routing).
 
-\paragraph{Active - Active (Asynchronous Routing)}
+\paragraph{Active - Active (Asymmetric Routing)}
 
 This is the most complex setup, because it is not clear which gateway
 performs the translation. This is why the connection tracking state has
@@ -475,7 +475,7 @@ between different NAT gateways. Utilising the state synchronization, it is
 possible to setup fault tolerant NAT gateways that do not lose
 connections in the case of an failure. In our setup an extra link
 between the gateways is used to replicate state information with a low-latency.
-This allows us to use asynchronous routing with our gateways, meaning that a
+This allows us to use asymmetric routing with our gateways, meaning that a
 connection can be translated by one gateway in one
 direction and translated back by the other gateway in the opposite
 direction. We performed tests that suggest that this setup works, but we have
